@@ -1,8 +1,11 @@
 package com.cashly.cashly_api.incomes.infrastructure.persistence;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -38,4 +41,21 @@ public interface SpringDataIncomeRepository extends JpaRepository<IncomeEntity, 
     List<IncomeEntity> findByUserIdAndCreatedAtBetweenOrderByCreatedAtDesc(String userId, 
                                                                            LocalDateTime startDate, 
                                                                            LocalDateTime endDate);
+    
+    // Heavy computation queries for database-optimized operations
+    
+    @Query("SELECT COALESCE(SUM(i.amount), 0) FROM IncomeEntity i " +
+           "WHERE i.userId = :userId " +
+           "AND i.createdAt BETWEEN :startDate AND :endDate")
+    BigDecimal calculateTotalIncomeForPeriod(@Param("userId") String userId,
+                                            @Param("startDate") LocalDateTime startDate,
+                                            @Param("endDate") LocalDateTime endDate);
+    
+    @Query("SELECT i.category, COALESCE(SUM(i.amount), 0) FROM IncomeEntity i " +
+           "WHERE i.userId = :userId " +
+           "AND i.createdAt BETWEEN :startDate AND :endDate " +
+           "GROUP BY i.category")
+    List<Object[]> calculateIncomeByCategory(@Param("userId") String userId,
+                                           @Param("startDate") LocalDateTime startDate,
+                                           @Param("endDate") LocalDateTime endDate);
 }

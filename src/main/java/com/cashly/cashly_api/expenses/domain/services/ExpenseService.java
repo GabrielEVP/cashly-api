@@ -1,6 +1,6 @@
 package com.cashly.cashly_api.expenses.domain.services;
 
-import com.cashly.cashly_api.expenses.domain.entities.Expense;
+import com.cashly.cashly_api.expenses.application.ports.ExpenseRepository;
 import com.cashly.cashly_api.expenses.domain.valueobjects.Amount;
 import com.cashly.cashly_api.expenses.domain.valueobjects.Category;
 
@@ -10,45 +10,17 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class ExpenseService {
 
-    public Amount calculateTotalExpenseForPeriod(List<Expense> expenses, String userId, 
-                                                LocalDate startDate, LocalDate endDate) {
-        validatePeriodCalculationParams(expenses, userId, startDate, endDate);
+    private final ExpenseRepository expenseRepository;
 
-        BigDecimal total = expenses.stream()
-            .filter(expense -> expense.belongsToUser(userId))
-            .filter(expense -> isDateInPeriod(expense.getDate(), startDate, endDate))
-            .map(expense -> expense.getAmount().getValue())
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        return new Amount(total);
+    public ExpenseService(ExpenseRepository expenseRepository) {
+        this.expenseRepository = expenseRepository;
     }
 
-    public Map<Category, Amount> calculateExpensesByCategory(List<Expense> expenses, String userId,
-                                                           LocalDate startDate, LocalDate endDate) {
-        validatePeriodCalculationParams(expenses, userId, startDate, endDate);
 
-        return expenses.stream()
-            .filter(expense -> expense.belongsToUser(userId))
-            .filter(expense -> isDateInPeriod(expense.getDate(), startDate, endDate))
-            .collect(Collectors.groupingBy(
-                Expense::getCategory,
-                Collectors.reducing(
-                    new Amount(BigDecimal.ZERO),
-                    Expense::getAmount,
-                    (amount1, amount2) -> amount1.add(amount2)
-                )
-            ));
-    }
-
-    public Amount calculateMonthlyAverageExpense(List<Expense> expenses, String userId, 
-                                               int months, LocalDate referenceDate) {
-        if (expenses == null) {
-            throw new IllegalArgumentException("Expenses list cannot be null");
-        }
+    public Amount calculateMonthlyAverageExpense(String userId, int months, LocalDate referenceDate) {
         if (userId == null || userId.trim().isEmpty()) {
             throw new IllegalArgumentException("User ID cannot be null or empty");
         }
@@ -62,7 +34,7 @@ public class ExpenseService {
         LocalDate startDate = referenceDate.minusMonths(months - 1).withDayOfMonth(1);
         LocalDate endDate = referenceDate.withDayOfMonth(referenceDate.lengthOfMonth());
 
-        Amount totalExpense = calculateTotalExpenseForPeriod(expenses, userId, startDate, endDate);
+        Amount totalExpense = expenseRepository.calculateTotalExpenseForPeriod(userId, startDate, endDate);
         BigDecimal average = totalExpense.getValue().divide(
             BigDecimal.valueOf(months), 
             2, 
@@ -72,11 +44,7 @@ public class ExpenseService {
         return new Amount(average);
     }
 
-    public SpendingAnalysis analyzeSpendingTrend(List<Expense> expenses, String userId, 
-                                               YearMonth currentMonth) {
-        if (expenses == null) {
-            throw new IllegalArgumentException("Expenses list cannot be null");
-        }
+    public SpendingAnalysis analyzeSpendingTrend(String userId, YearMonth currentMonth) {
         if (userId == null || userId.trim().isEmpty()) {
             throw new IllegalArgumentException("User ID cannot be null or empty");
         }
@@ -91,8 +59,8 @@ public class ExpenseService {
         LocalDate previousStart = previousMonth.atDay(1);
         LocalDate previousEnd = previousMonth.atEndOfMonth();
 
-        Amount currentExpense = calculateTotalExpenseForPeriod(expenses, userId, currentStart, currentEnd);
-        Amount previousExpense = calculateTotalExpenseForPeriod(expenses, userId, previousStart, previousEnd);
+        Amount currentExpense = expenseRepository.calculateTotalExpenseForPeriod(userId, currentStart, currentEnd);
+        Amount previousExpense = expenseRepository.calculateTotalExpenseForPeriod(userId, previousStart, previousEnd);
 
         BigDecimal changePercentage = calculateChangePercentage(
             previousExpense.getValue(), 
@@ -123,71 +91,15 @@ public class ExpenseService {
         return amount.getValue().compareTo(threshold) > 0;
     }
 
-    public Map<Category, BigDecimal> calculateCategoryPercentages(List<Expense> expenses, String userId,
-                                                                LocalDate startDate, LocalDate endDate) {
-        validatePeriodCalculationParams(expenses, userId, startDate, endDate);
 
-        Map<Category, Amount> categoryTotals = calculateExpensesByCategory(expenses, userId, startDate, endDate);
-        Amount totalExpense = calculateTotalExpenseForPeriod(expenses, userId, startDate, endDate);
-
-        if (totalExpense.getValue().compareTo(BigDecimal.ZERO) == 0) {
-            return categoryTotals.keySet().stream()
-                .collect(Collectors.toMap(
-                    category -> category,
-                    category -> BigDecimal.ZERO
-                ));
-        }
-
-        return categoryTotals.entrySet().stream()
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                entry -> entry.getValue().getValue()
-                    .divide(totalExpense.getValue(), 4, RoundingMode.HALF_UP)
-                    .multiply(BigDecimal.valueOf(100))
-                    .setScale(2, RoundingMode.HALF_UP)
-            ));
-    }
-
-    public CategoryAnalysis analyzeHighestSpendingCategory(List<Expense> expenses, String userId,
-                                                         LocalDate startDate, LocalDate endDate) {
-        validatePeriodCalculationParams(expenses, userId, startDate, endDate);
-
-        Map<Category, Amount> categoryTotals = calculateExpensesByCategory(expenses, userId, startDate, endDate);
-
-        if (categoryTotals.isEmpty()) {
-            return new CategoryAnalysis(null, new Amount(BigDecimal.ZERO), BigDecimal.ZERO);
-        }
-
-        Map.Entry<Category, Amount> highestEntry = categoryTotals.entrySet().stream()
-            .max(Map.Entry.<Category, Amount>comparingByValue(
-                (amount1, amount2) -> amount1.getValue().compareTo(amount2.getValue())
-            ))
-            .orElseThrow(() -> new IllegalStateException("Should not happen with non-empty map"));
-
-        Amount totalExpense = calculateTotalExpenseForPeriod(expenses, userId, startDate, endDate);
-        BigDecimal percentage = totalExpense.getValue().compareTo(BigDecimal.ZERO) == 0 ?
-            BigDecimal.ZERO :
-            highestEntry.getValue().getValue()
-                .divide(totalExpense.getValue(), 4, RoundingMode.HALF_UP)
-                .multiply(BigDecimal.valueOf(100))
-                .setScale(2, RoundingMode.HALF_UP);
-
-        return new CategoryAnalysis(
-            highestEntry.getKey(),
-            highestEntry.getValue(),
-            percentage
-        );
-    }
-
-    public BudgetUtilization calculateBudgetUtilization(List<Expense> expenses, String userId,
-                                                      Amount budgetLimit, LocalDate startDate,
-                                                      LocalDate endDate) {
-        validatePeriodCalculationParams(expenses, userId, startDate, endDate);
+    public BudgetUtilization calculateBudgetUtilization(String userId, Amount budgetLimit, 
+                                                      LocalDate startDate, LocalDate endDate) {
+        validatePeriodCalculationParams(userId, startDate, endDate);
         if (budgetLimit == null) {
             throw new IllegalArgumentException("Budget limit cannot be null");
         }
 
-        Amount actualExpense = calculateTotalExpenseForPeriod(expenses, userId, startDate, endDate);
+        Amount actualExpense = expenseRepository.calculateTotalExpenseForPeriod(userId, startDate, endDate);
         
         BigDecimal utilizationPercentage = budgetLimit.getValue().compareTo(BigDecimal.ZERO) == 0 ?
             BigDecimal.valueOf(100) :
@@ -211,11 +123,7 @@ public class ExpenseService {
     }
 
 
-    private void validatePeriodCalculationParams(List<Expense> expenses, String userId,
-                                               LocalDate startDate, LocalDate endDate) {
-        if (expenses == null) {
-            throw new IllegalArgumentException("Expenses list cannot be null");
-        }
+    private void validatePeriodCalculationParams(String userId, LocalDate startDate, LocalDate endDate) {
         if (userId == null || userId.trim().isEmpty()) {
             throw new IllegalArgumentException("User ID cannot be null or empty");
         }
@@ -228,11 +136,6 @@ public class ExpenseService {
         if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("Start date cannot be after end date");
         }
-    }
-
-    private boolean isDateInPeriod(LocalDate date, LocalDate startDate, LocalDate endDate) {
-        return (date.isEqual(startDate) || date.isAfter(startDate)) &&
-               (date.isEqual(endDate) || date.isBefore(endDate));
     }
 
     private BigDecimal calculateChangePercentage(BigDecimal previousAmount, BigDecimal currentAmount) {
@@ -335,6 +238,27 @@ public class ExpenseService {
                     ", percentageOfTotal=" + percentageOfTotal +
                     '}';
         }
+    }
+
+    public List<CategoryAnalysis> analyzeCategoryBreakdown(String userId, LocalDate startDate, LocalDate endDate) {
+        validatePeriodCalculationParams(userId, startDate, endDate);
+        
+        Map<Category, Amount> categoryAmounts = expenseRepository.calculateExpensesByCategory(userId, startDate, endDate);
+        Amount totalExpense = expenseRepository.calculateTotalExpenseForPeriod(userId, startDate, endDate);
+        
+        return categoryAmounts.entrySet().stream()
+            .map(entry -> {
+                BigDecimal percentage = totalExpense.getValue().compareTo(BigDecimal.ZERO) == 0 ?
+                    BigDecimal.ZERO :
+                    entry.getValue().getValue()
+                        .divide(totalExpense.getValue(), 4, RoundingMode.HALF_UP)
+                        .multiply(BigDecimal.valueOf(100))
+                        .setScale(2, RoundingMode.HALF_UP);
+                
+                return new CategoryAnalysis(entry.getKey(), entry.getValue(), percentage);
+            })
+            .sorted((a, b) -> b.getAmount().getValue().compareTo(a.getAmount().getValue()))
+            .toList();
     }
 
     public static class BudgetUtilization {

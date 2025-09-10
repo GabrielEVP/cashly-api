@@ -1,5 +1,6 @@
 package com.cashly.cashly_api.expenses.domain.services;
 
+import com.cashly.cashly_api.expenses.application.ports.ExpenseRepository;
 import com.cashly.cashly_api.expenses.domain.entities.Expense;
 import com.cashly.cashly_api.expenses.domain.services.ExpenseService.BudgetUtilization;
 import com.cashly.cashly_api.expenses.domain.services.ExpenseService.CategoryAnalysis;
@@ -7,201 +8,149 @@ import com.cashly.cashly_api.expenses.domain.services.ExpenseService.SpendingAna
 import com.cashly.cashly_api.expenses.domain.valueobjects.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class ExpenseServiceUnitTest {
 
+    @Mock
+    private ExpenseRepository expenseRepository;
+    
     private ExpenseService expenseService;
-    private List<Expense> testExpenses;
     private String validUserId;
     private LocalDate startDate;
     private LocalDate endDate;
 
     @BeforeEach
     void setUp() {
-        expenseService = new ExpenseService();
+        expenseService = new ExpenseService(expenseRepository);
         validUserId = "user123";
         startDate = LocalDate.of(2024, 1, 1);
         endDate = LocalDate.of(2024, 1, 31);
-        
-        testExpenses = Arrays.asList(
-            new Expense(
-                ExpenseId.generate(),
-                new Amount(new BigDecimal("800.00")),
-                new Description("Groceries"),
-                new Category("FOOD_DINING"),
-                LocalDate.of(2024, 1, 15),
-                validUserId
-            ),
-            new Expense(
-                ExpenseId.generate(),
-                new Amount(new BigDecimal("1200.00")),
-                new Description("Rent payment"),
-                new Category("HOUSING"),
-                LocalDate.of(2024, 1, 1),
-                validUserId
-            ),
-            new Expense(
-                ExpenseId.generate(),
-                new Amount(new BigDecimal("300.00")),
-                new Description("Gas bill"),
-                new Category("OTHER"),
-                LocalDate.of(2024, 1, 20),
-                validUserId
-            ),
-            new Expense(
-                ExpenseId.generate(),
-                new Amount(new BigDecimal("500.00")),
-                new Description("Other user expense"),
-                new Category("FOOD_DINING"),
-                LocalDate.of(2024, 1, 10),
-                "otherUser"
-            )
-        );
-    }
-
-    @Test
-    void should_CalculateTotalExpense_When_ValidParametersProvided() {
-        Amount result = expenseService.calculateTotalExpenseForPeriod(testExpenses, validUserId, startDate, endDate);
-        
-        assertEquals(new BigDecimal("2300.00"), result.getValue());
-    }
-
-    @Test
-    void should_ReturnZeroAmount_When_NoExpensesInPeriod() {
-        LocalDate futureStart = LocalDate.of(2024, 6, 1);
-        LocalDate futureEnd = LocalDate.of(2024, 6, 30);
-        
-        Amount result = expenseService.calculateTotalExpenseForPeriod(testExpenses, validUserId, futureStart, futureEnd);
-        
-        assertEquals(BigDecimal.ZERO, result.getValue());
-    }
-
-    @Test
-    void should_ReturnZeroAmount_When_NoExpensesForUser() {
-        Amount result = expenseService.calculateTotalExpenseForPeriod(testExpenses, "nonexistentUser", startDate, endDate);
-        
-        assertEquals(BigDecimal.ZERO, result.getValue());
-    }
-
-    @Test
-    void should_ThrowException_When_ExpensesListIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> 
-            expenseService.calculateTotalExpenseForPeriod(null, validUserId, startDate, endDate));
-    }
-
-    @Test
-    void should_ThrowException_When_UserIdIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> 
-            expenseService.calculateTotalExpenseForPeriod(testExpenses, null, startDate, endDate));
-    }
-
-    @Test
-    void should_ThrowException_When_UserIdIsEmpty() {
-        assertThrows(IllegalArgumentException.class, () -> 
-            expenseService.calculateTotalExpenseForPeriod(testExpenses, "", startDate, endDate));
-    }
-
-    @Test
-    void should_ThrowException_When_StartDateIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> 
-            expenseService.calculateTotalExpenseForPeriod(testExpenses, validUserId, null, endDate));
-    }
-
-    @Test
-    void should_ThrowException_When_EndDateIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> 
-            expenseService.calculateTotalExpenseForPeriod(testExpenses, validUserId, startDate, null));
-    }
-
-    @Test
-    void should_ThrowException_When_StartDateIsAfterEndDate() {
-        assertThrows(IllegalArgumentException.class, () -> 
-            expenseService.calculateTotalExpenseForPeriod(testExpenses, validUserId, endDate, startDate));
-    }
-
-    @Test
-    void should_CalculateExpensesByCategory_When_ValidParametersProvided() {
-        Map<Category, Amount> result = expenseService.calculateExpensesByCategory(testExpenses, validUserId, startDate, endDate);
-        
-        assertEquals(3, result.size());
-        assertEquals(new BigDecimal("800.00"), result.get(new Category("FOOD_DINING")).getValue());
-        assertEquals(new BigDecimal("1200.00"), result.get(new Category("HOUSING")).getValue());
-        assertEquals(new BigDecimal("300.00"), result.get(new Category("OTHER")).getValue());
-    }
-
-    @Test
-    void should_ReturnEmptyMap_When_NoExpensesInPeriodForCategory() {
-        LocalDate futureStart = LocalDate.of(2024, 6, 1);
-        LocalDate futureEnd = LocalDate.of(2024, 6, 30);
-        
-        Map<Category, Amount> result = expenseService.calculateExpensesByCategory(testExpenses, validUserId, futureStart, futureEnd);
-        
-        assertTrue(result.isEmpty());
     }
 
     @Test
     void should_CalculateMonthlyAverage_When_ValidParametersProvided() {
-        Amount result = expenseService.calculateMonthlyAverageExpense(testExpenses, validUserId, 3, LocalDate.of(2024, 1, 31));
+        // Arrange
+        LocalDate referenceDate = LocalDate.of(2024, 1, 31);
+        Amount expectedTotal = new Amount(new BigDecimal("2300.00"));
+        when(expenseRepository.calculateTotalExpenseForPeriod(eq(validUserId), any(LocalDate.class), any(LocalDate.class)))
+            .thenReturn(expectedTotal);
         
+        // Act
+        Amount result = expenseService.calculateMonthlyAverageExpense(validUserId, 3, referenceDate);
+        
+        // Assert
         BigDecimal expected = new BigDecimal("2300.00").divide(BigDecimal.valueOf(3), 2, BigDecimal.ROUND_HALF_UP);
         assertEquals(expected, result.getValue());
+        verify(expenseRepository).calculateTotalExpenseForPeriod(eq(validUserId), any(LocalDate.class), any(LocalDate.class));
     }
 
     @Test
     void should_ThrowException_When_MonthsIsZero() {
         assertThrows(IllegalArgumentException.class, () -> 
-            expenseService.calculateMonthlyAverageExpense(testExpenses, validUserId, 0, LocalDate.now()));
+            expenseService.calculateMonthlyAverageExpense(validUserId, 0, LocalDate.now()));
     }
 
     @Test
     void should_ThrowException_When_MonthsIsNegative() {
         assertThrows(IllegalArgumentException.class, () -> 
-            expenseService.calculateMonthlyAverageExpense(testExpenses, validUserId, -1, LocalDate.now()));
+            expenseService.calculateMonthlyAverageExpense(validUserId, -1, LocalDate.now()));
     }
 
     @Test
     void should_ThrowException_When_ReferenceDateIsNull() {
         assertThrows(IllegalArgumentException.class, () -> 
-            expenseService.calculateMonthlyAverageExpense(testExpenses, validUserId, 3, null));
+            expenseService.calculateMonthlyAverageExpense(validUserId, 3, null));
+    }
+
+    @Test
+    void should_ThrowException_When_UserIdIsNull() {
+        assertThrows(IllegalArgumentException.class, () -> 
+            expenseService.calculateMonthlyAverageExpense(null, 3, LocalDate.now()));
+    }
+
+    @Test
+    void should_ThrowException_When_UserIdIsEmpty() {
+        assertThrows(IllegalArgumentException.class, () -> 
+            expenseService.calculateMonthlyAverageExpense("", 3, LocalDate.now()));
     }
 
     @Test
     void should_AnalyzeSpendingTrend_When_ValidParametersProvided() {
+        // Arrange
         YearMonth currentMonth = YearMonth.of(2024, 1);
+        Amount currentExpense = new Amount(new BigDecimal("2300.00"));
+        Amount previousExpense = new Amount(BigDecimal.ZERO);
         
-        SpendingAnalysis result = expenseService.analyzeSpendingTrend(testExpenses, validUserId, currentMonth);
+        when(expenseRepository.calculateTotalExpenseForPeriod(eq(validUserId), eq(currentMonth.atDay(1)), eq(currentMonth.atEndOfMonth())))
+            .thenReturn(currentExpense);
+        when(expenseRepository.calculateTotalExpenseForPeriod(eq(validUserId), eq(currentMonth.minusMonths(1).atDay(1)), eq(currentMonth.minusMonths(1).atEndOfMonth())))
+            .thenReturn(previousExpense);
         
+        // Act
+        SpendingAnalysis result = expenseService.analyzeSpendingTrend(validUserId, currentMonth);
+        
+        // Assert
         assertNotNull(result);
         assertEquals(currentMonth, result.getAnalysisMonth());
         assertEquals(new BigDecimal("2300.00"), result.getCurrentMonthExpense().getValue());
         assertEquals(BigDecimal.ZERO, result.getPreviousMonthExpense().getValue());
         assertEquals(new BigDecimal("100.00"), result.getChangePercentage());
+        
+        verify(expenseRepository, times(2)).calculateTotalExpenseForPeriod(eq(validUserId), any(LocalDate.class), any(LocalDate.class));
     }
 
     @Test
     void should_ReturnZeroChange_When_BothMonthsHaveZeroExpenses() {
+        // Arrange
         YearMonth futureMonth = YearMonth.of(2024, 6);
+        Amount zeroExpense = new Amount(BigDecimal.ZERO);
         
-        SpendingAnalysis result = expenseService.analyzeSpendingTrend(testExpenses, validUserId, futureMonth);
+        when(expenseRepository.calculateTotalExpenseForPeriod(eq(validUserId), any(LocalDate.class), any(LocalDate.class)))
+            .thenReturn(zeroExpense);
         
+        // Act
+        SpendingAnalysis result = expenseService.analyzeSpendingTrend(validUserId, futureMonth);
+        
+        // Assert
         assertEquals(BigDecimal.ZERO, result.getChangePercentage());
         assertEquals(BigDecimal.ZERO, result.getCurrentMonthExpense().getValue());
         assertEquals(BigDecimal.ZERO, result.getPreviousMonthExpense().getValue());
+        
+        verify(expenseRepository, times(2)).calculateTotalExpenseForPeriod(eq(validUserId), any(LocalDate.class), any(LocalDate.class));
     }
 
     @Test
     void should_ThrowException_When_CurrentMonthIsNull() {
         assertThrows(IllegalArgumentException.class, () -> 
-            expenseService.analyzeSpendingTrend(testExpenses, validUserId, null));
+            expenseService.analyzeSpendingTrend(validUserId, null));
+    }
+
+    @Test
+    void should_ThrowException_When_UserIdIsNullForSpendingTrend() {
+        assertThrows(IllegalArgumentException.class, () -> 
+            expenseService.analyzeSpendingTrend(null, YearMonth.of(2024, 1)));
+    }
+
+    @Test
+    void should_ThrowException_When_UserIdIsEmptyForSpendingTrend() {
+        assertThrows(IllegalArgumentException.class, () -> 
+            expenseService.analyzeSpendingTrend("", YearMonth.of(2024, 1)));
     }
 
     @Test
@@ -274,54 +223,18 @@ class ExpenseServiceUnitTest {
     }
 
     @Test
-    void should_CalculateCategoryPercentages_When_ValidParametersProvided() {
-        Map<Category, BigDecimal> result = expenseService.calculateCategoryPercentages(testExpenses, validUserId, startDate, endDate);
-        
-        assertEquals(3, result.size());
-        assertEquals(new BigDecimal("34.78"), result.get(new Category("FOOD_DINING")));
-        assertEquals(new BigDecimal("52.17"), result.get(new Category("HOUSING")));
-        assertEquals(new BigDecimal("13.04"), result.get(new Category("OTHER")));
-    }
-
-    @Test
-    void should_ReturnZeroPercentages_When_NoExpenseInPeriod() {
-        LocalDate futureStart = LocalDate.of(2024, 6, 1);
-        LocalDate futureEnd = LocalDate.of(2024, 6, 30);
-        
-        Map<Category, BigDecimal> result = expenseService.calculateCategoryPercentages(testExpenses, validUserId, futureStart, futureEnd);
-        
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
-    void should_AnalyzeHighestSpendingCategory_When_ValidParametersProvided() {
-        CategoryAnalysis result = expenseService.analyzeHighestSpendingCategory(testExpenses, validUserId, startDate, endDate);
-        
-        assertNotNull(result);
-        assertEquals(new Category("HOUSING"), result.getCategory());
-        assertEquals(new BigDecimal("1200.00"), result.getAmount().getValue());
-        assertEquals(new BigDecimal("52.17"), result.getPercentageOfTotal());
-    }
-
-    @Test
-    void should_ReturnEmptyAnalysis_When_NoExpensesForHighestCategory() {
-        LocalDate futureStart = LocalDate.of(2024, 6, 1);
-        LocalDate futureEnd = LocalDate.of(2024, 6, 30);
-        
-        CategoryAnalysis result = expenseService.analyzeHighestSpendingCategory(testExpenses, validUserId, futureStart, futureEnd);
-        
-        assertNotNull(result);
-        assertNull(result.getCategory());
-        assertEquals(BigDecimal.ZERO, result.getAmount().getValue());
-        assertEquals(BigDecimal.ZERO, result.getPercentageOfTotal());
-    }
-
-    @Test
     void should_CalculateBudgetUtilization_When_ValidParametersProvided() {
+        // Arrange
         Amount budgetLimit = new Amount(new BigDecimal("3000.00"));
+        Amount actualExpense = new Amount(new BigDecimal("2300.00"));
         
-        BudgetUtilization result = expenseService.calculateBudgetUtilization(testExpenses, validUserId, budgetLimit, startDate, endDate);
+        when(expenseRepository.calculateTotalExpenseForPeriod(validUserId, startDate, endDate))
+            .thenReturn(actualExpense);
         
+        // Act
+        BudgetUtilization result = expenseService.calculateBudgetUtilization(validUserId, budgetLimit, startDate, endDate);
+        
+        // Assert
         assertNotNull(result);
         assertEquals(budgetLimit, result.getBudgetLimit());
         assertEquals(new BigDecimal("2300.00"), result.getActualExpense().getValue());
@@ -329,14 +242,23 @@ class ExpenseServiceUnitTest {
         assertEquals(new BigDecimal("76.67"), result.getUtilizationPercentage());
         assertFalse(result.isOverBudget());
         assertEquals(BigDecimal.ZERO, result.getOverspendAmount().getValue());
+        
+        verify(expenseRepository).calculateTotalExpenseForPeriod(validUserId, startDate, endDate);
     }
 
     @Test
     void should_CalculateBudgetUtilization_When_OverBudget() {
+        // Arrange
         Amount budgetLimit = new Amount(new BigDecimal("2000.00"));
+        Amount actualExpense = new Amount(new BigDecimal("2300.00"));
         
-        BudgetUtilization result = expenseService.calculateBudgetUtilization(testExpenses, validUserId, budgetLimit, startDate, endDate);
+        when(expenseRepository.calculateTotalExpenseForPeriod(validUserId, startDate, endDate))
+            .thenReturn(actualExpense);
         
+        // Act
+        BudgetUtilization result = expenseService.calculateBudgetUtilization(validUserId, budgetLimit, startDate, endDate);
+        
+        // Assert
         assertNotNull(result);
         assertEquals(budgetLimit, result.getBudgetLimit());
         assertEquals(new BigDecimal("2300.00"), result.getActualExpense().getValue());
@@ -344,77 +266,163 @@ class ExpenseServiceUnitTest {
         assertEquals(new BigDecimal("115.00"), result.getUtilizationPercentage());
         assertTrue(result.isOverBudget());
         assertEquals(new BigDecimal("300.00"), result.getOverspendAmount().getValue());
+        
+        verify(expenseRepository).calculateTotalExpenseForPeriod(validUserId, startDate, endDate);
     }
 
     @Test
     void should_HandleZeroBudgetLimit_When_CalculatingUtilization() {
+        // Arrange
         Amount zeroBudgetLimit = new Amount(BigDecimal.ZERO);
+        Amount actualExpense = new Amount(new BigDecimal("2300.00"));
         
-        BudgetUtilization result = expenseService.calculateBudgetUtilization(testExpenses, validUserId, zeroBudgetLimit, startDate, endDate);
+        when(expenseRepository.calculateTotalExpenseForPeriod(validUserId, startDate, endDate))
+            .thenReturn(actualExpense);
         
+        // Act
+        BudgetUtilization result = expenseService.calculateBudgetUtilization(validUserId, zeroBudgetLimit, startDate, endDate);
+        
+        // Assert
         assertNotNull(result);
         assertEquals(zeroBudgetLimit, result.getBudgetLimit());
         assertEquals(new BigDecimal("100.00"), result.getUtilizationPercentage());
         assertTrue(result.isOverBudget());
+        
+        verify(expenseRepository).calculateTotalExpenseForPeriod(validUserId, startDate, endDate);
     }
 
     @Test
     void should_ThrowException_When_BudgetLimitIsNull() {
         assertThrows(IllegalArgumentException.class, () -> 
-            expenseService.calculateBudgetUtilization(testExpenses, validUserId, null, startDate, endDate));
+            expenseService.calculateBudgetUtilization(validUserId, null, startDate, endDate));
     }
 
     @Test
-    void should_HandleBoundaryDates_When_ExpensesOnBoundaryDates() {
-        Expense boundaryExpense1 = new Expense(
-            ExpenseId.generate(),
-            new Amount(new BigDecimal("100.00")),
-            new Description("Start date expense"),
-            new Category("FOOD_DINING"),
-            startDate,
-            validUserId
-        );
-        
-        Expense boundaryExpense2 = new Expense(
-            ExpenseId.generate(),
-            new Amount(new BigDecimal("200.00")),
-            new Description("End date expense"),
-            new Category("FOOD_DINING"),
-            endDate,
-            validUserId
-        );
-        
-        List<Expense> boundaryExpenses = Arrays.asList(boundaryExpense1, boundaryExpense2);
-        
-        Amount result = expenseService.calculateTotalExpenseForPeriod(boundaryExpenses, validUserId, startDate, endDate);
-        
-        assertEquals(new BigDecimal("300.00"), result.getValue());
+    void should_ThrowException_When_UserIdIsNullForBudgetUtilization() {
+        Amount budgetLimit = new Amount(new BigDecimal("3000.00"));
+        assertThrows(IllegalArgumentException.class, () -> 
+            expenseService.calculateBudgetUtilization(null, budgetLimit, startDate, endDate));
     }
 
     @Test
-    void should_HandleSingleCategoryExpenses_When_CalculatingPercentages() {
-        List<Expense> singleCategoryExpenses = Arrays.asList(
-            new Expense(
-                ExpenseId.generate(),
-                new Amount(new BigDecimal("1000.00")),
-                new Description("Food expense 1"),
-                new Category("FOOD_DINING"),
-                LocalDate.of(2024, 1, 5),
-                validUserId
-            ),
-            new Expense(
-                ExpenseId.generate(),
-                new Amount(new BigDecimal("500.00")),
-                new Description("Food expense 2"),
-                new Category("FOOD_DINING"),
-                LocalDate.of(2024, 1, 15),
-                validUserId
-            )
-        );
+    void should_ThrowException_When_UserIdIsEmptyForBudgetUtilization() {
+        Amount budgetLimit = new Amount(new BigDecimal("3000.00"));
+        assertThrows(IllegalArgumentException.class, () -> 
+            expenseService.calculateBudgetUtilization("", budgetLimit, startDate, endDate));
+    }
+
+    @Test
+    void should_ThrowException_When_StartDateIsNullForBudgetUtilization() {
+        Amount budgetLimit = new Amount(new BigDecimal("3000.00"));
+        assertThrows(IllegalArgumentException.class, () -> 
+            expenseService.calculateBudgetUtilization(validUserId, budgetLimit, null, endDate));
+    }
+
+    @Test
+    void should_ThrowException_When_EndDateIsNullForBudgetUtilization() {
+        Amount budgetLimit = new Amount(new BigDecimal("3000.00"));
+        assertThrows(IllegalArgumentException.class, () -> 
+            expenseService.calculateBudgetUtilization(validUserId, budgetLimit, startDate, null));
+    }
+
+    @Test
+    void should_ThrowException_When_StartDateIsAfterEndDateForBudgetUtilization() {
+        Amount budgetLimit = new Amount(new BigDecimal("3000.00"));
+        assertThrows(IllegalArgumentException.class, () -> 
+            expenseService.calculateBudgetUtilization(validUserId, budgetLimit, endDate, startDate));
+    }
+
+    @Test
+    void should_AnalyzeCategoryBreakdown_When_ValidParametersProvided() {
+        // Arrange
+        Map<Category, Amount> categoryAmounts = new HashMap<>();
+        categoryAmounts.put(new Category("HOUSING"), new Amount(new BigDecimal("1200.00")));
+        categoryAmounts.put(new Category("FOOD_DINING"), new Amount(new BigDecimal("800.00")));
+        categoryAmounts.put(new Category("OTHER"), new Amount(new BigDecimal("300.00")));
         
-        Map<Category, BigDecimal> result = expenseService.calculateCategoryPercentages(singleCategoryExpenses, validUserId, startDate, endDate);
+        Amount totalExpense = new Amount(new BigDecimal("2300.00"));
         
-        assertEquals(1, result.size());
-        assertEquals(new BigDecimal("100.00"), result.get(new Category("FOOD_DINING")));
+        when(expenseRepository.calculateExpensesByCategory(validUserId, startDate, endDate))
+            .thenReturn(categoryAmounts);
+        when(expenseRepository.calculateTotalExpenseForPeriod(validUserId, startDate, endDate))
+            .thenReturn(totalExpense);
+        
+        // Act
+        List<CategoryAnalysis> result = expenseService.analyzeCategoryBreakdown(validUserId, startDate, endDate);
+        
+        // Assert
+        assertNotNull(result);
+        assertEquals(3, result.size());
+        
+        // Should be sorted by amount (descending)
+        CategoryAnalysis highest = result.get(0);
+        assertEquals(new Category("HOUSING"), highest.getCategory());
+        assertEquals(new BigDecimal("1200.00"), highest.getAmount().getValue());
+        assertEquals(new BigDecimal("52.17"), highest.getPercentageOfTotal());
+        
+        CategoryAnalysis second = result.get(1);
+        assertEquals(new Category("FOOD_DINING"), second.getCategory());
+        assertEquals(new BigDecimal("800.00"), second.getAmount().getValue());
+        assertEquals(new BigDecimal("34.78"), second.getPercentageOfTotal());
+        
+        CategoryAnalysis lowest = result.get(2);
+        assertEquals(new Category("OTHER"), lowest.getCategory());
+        assertEquals(new BigDecimal("300.00"), lowest.getAmount().getValue());
+        assertEquals(new BigDecimal("13.04"), lowest.getPercentageOfTotal());
+        
+        verify(expenseRepository).calculateExpensesByCategory(validUserId, startDate, endDate);
+        verify(expenseRepository).calculateTotalExpenseForPeriod(validUserId, startDate, endDate);
+    }
+
+    @Test
+    void should_ReturnEmptyList_When_NoExpensesForCategoryBreakdown() {
+        // Arrange
+        Map<Category, Amount> emptyMap = new HashMap<>();
+        Amount zeroTotal = new Amount(BigDecimal.ZERO);
+        
+        when(expenseRepository.calculateExpensesByCategory(validUserId, startDate, endDate))
+            .thenReturn(emptyMap);
+        when(expenseRepository.calculateTotalExpenseForPeriod(validUserId, startDate, endDate))
+            .thenReturn(zeroTotal);
+        
+        // Act
+        List<CategoryAnalysis> result = expenseService.analyzeCategoryBreakdown(validUserId, startDate, endDate);
+        
+        // Assert
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        
+        verify(expenseRepository).calculateExpensesByCategory(validUserId, startDate, endDate);
+        verify(expenseRepository).calculateTotalExpenseForPeriod(validUserId, startDate, endDate);
+    }
+
+    @Test
+    void should_ThrowException_When_UserIdIsNullForCategoryBreakdown() {
+        assertThrows(IllegalArgumentException.class, () -> 
+            expenseService.analyzeCategoryBreakdown(null, startDate, endDate));
+    }
+
+    @Test
+    void should_ThrowException_When_UserIdIsEmptyForCategoryBreakdown() {
+        assertThrows(IllegalArgumentException.class, () -> 
+            expenseService.analyzeCategoryBreakdown("", startDate, endDate));
+    }
+
+    @Test
+    void should_ThrowException_When_StartDateIsNullForCategoryBreakdown() {
+        assertThrows(IllegalArgumentException.class, () -> 
+            expenseService.analyzeCategoryBreakdown(validUserId, null, endDate));
+    }
+
+    @Test
+    void should_ThrowException_When_EndDateIsNullForCategoryBreakdown() {
+        assertThrows(IllegalArgumentException.class, () -> 
+            expenseService.analyzeCategoryBreakdown(validUserId, startDate, null));
+    }
+
+    @Test
+    void should_ThrowException_When_StartDateIsAfterEndDateForCategoryBreakdown() {
+        assertThrows(IllegalArgumentException.class, () -> 
+            expenseService.analyzeCategoryBreakdown(validUserId, endDate, startDate));
     }
 }

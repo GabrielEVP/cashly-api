@@ -1,11 +1,14 @@
 package com.cashly.cashly_api.incomes.application.ports;
 
 import com.cashly.cashly_api.incomes.domain.entities.Income;
+import com.cashly.cashly_api.incomes.domain.valueobjects.Amount;
 import com.cashly.cashly_api.incomes.domain.valueobjects.Category;
 import com.cashly.cashly_api.incomes.domain.valueobjects.IncomeId;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -65,4 +68,36 @@ public interface IncomeRepository {
      * @return true if the income exists, false otherwise
      */
     boolean existsById(IncomeId id);
+    
+    // Heavy computation methods - optimized for database processing
+    
+    /**
+     * Calculates the total income amount for a user within a date range.
+     * Uses database aggregation for optimal performance.
+     * @param userId the user ID
+     * @param startDate the start date (inclusive)
+     * @param endDate the end date (inclusive)
+     * @return the total income amount
+     */
+    Amount calculateTotalIncomeForPeriod(String userId, LocalDate startDate, LocalDate endDate);
+    
+    /**
+     * Calculates income amounts grouped by category for a user within a date range.
+     * Uses database aggregation for optimal performance.
+     * @param userId the user ID
+     * @param startDate the start date (inclusive)
+     * @param endDate the end date (inclusive)
+     * @return a map of categories to their total income amounts
+     */
+    Map<Category, Amount> calculateIncomeByCategory(String userId, LocalDate startDate, LocalDate endDate);
+    
+    /**
+     * Calculates the percentage distribution of income by category for a user within a date range.
+     * Uses database aggregation for optimal performance.
+     * @param userId the user ID
+     * @param startDate the start date (inclusive)
+     * @param endDate the end date (inclusive)
+     * @return a map of categories to their percentage of total income
+     */
+    Map<Category, Double> calculateCategoryPercentages(String userId, LocalDate startDate, LocalDate endDate);
 }
