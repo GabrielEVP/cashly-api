@@ -1,0 +1,35 @@
+# Development Dockerfile - Includes development tools and hot-reload capabilities
+# This Dockerfile is optimized for development workflow with fast feedback
+
+FROM maven:3.9.9-amazoncorretto-24
+
+WORKDIR /app
+
+# Install useful development tools
+RUN yum install -y wget curl vim git && \
+    yum clean all
+
+# Copy Maven configuration files
+COPY pom.xml ./
+COPY .mvn .mvn
+COPY mvnw ./
+
+# Download dependencies (this layer will be cached)
+RUN ./mvnw dependency:go-offline -B
+
+# Copy source code
+COPY src ./src
+
+# Expose application port
+EXPOSE 8080
+
+# Expose debug port for remote debugging
+EXPOSE 5005
+
+# Set development profile and enable debugging
+ENV SPRING_PROFILES_ACTIVE=dev
+ENV JAVA_TOOL_OPTIONS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+
+# Run with Spring Boot DevTools for hot reload
+ENTRYPOINT ["./mvnw", "spring-boot:run", \
+    "-Dspring-boot.run.jvmArguments=-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"]

@@ -318,31 +318,207 @@ GET    /api/v1/accounts/{accountId}/transactions
 
 ## 🐳 Docker Setup
 
+The project includes three specialized Dockerfiles for different environments:
+
+### Dockerfile Overview
+
+| Dockerfile | Purpose | Use Case | Features |
+|------------|---------|----------|----------|
+| `Dockerfile.dev` | Development | Local development with hot-reload | Debug port (5005), Spring DevTools, development tools |
+| `Dockerfile.test` | Testing | Running tests in isolated environment | Testcontainers support, coverage reports |
+| `Dockerfile.prod` | Production | Production deployment | Optimized image, security hardening, health checks |
+
 ### Development Environment
+
+Run the application with hot-reload and debugging capabilities:
+
 ```bash
-# Start all services
+# Build and run development container
+docker build -f Dockerfile.dev -t cashly-api:dev .
+docker run -p 8080:8080 -p 5005:5005 \
+  -e SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/cashly_db \
+  -e SPRING_DATASOURCE_USERNAME=cashly_user \
+  -e SPRING_DATASOURCE_PASSWORD=cashly_pass \
+  cashly-api:dev
+
+# Using Docker Compose (recommended)
 docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
 ```
 
-### Production Deployment
-```dockerfile
-# Multi-stage build for production
-FROM openjdk:24-jdk-slim as builder
-WORKDIR /app
-COPY . .
-RUN ./mvnw clean package -DskipTests
+**Features:**
+- Hot-reload with Spring Boot DevTools
+- Remote debugging on port 5005
+- Development tools pre-installed
+- Connected to local MySQL database
 
-FROM openjdk:24-jre-slim
-WORKDIR /app
-COPY --from=builder /app/target/cashly-api-*.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+### Testing Environment
+
+Run all tests in an isolated container:
+
+```bash
+# Build test container
+docker build -f Dockerfile.test -t cashly-api:test .
+
+# Run all tests with coverage
+docker run --rm \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $(pwd)/target:/app/target \
+  cashly-api:test
+
+# Run specific test suites
+docker run --rm cashly-api:test ./mvnw test -Dtest="**/*UnitTest"
+docker run --rm cashly-api:test ./mvnw test -Dtest="**/*IntegrationTest"
+docker run --rm cashly-api:test ./mvnw test -Dtest="**/*E2ETest"
+
+# Using Docker Compose
+docker-compose up app-test
+```
+
+**Features:**
+- Testcontainers support for integration tests
+- JaCoCo coverage reports
+- Isolated test environment
+- Docker socket mounted for Testcontainers
+
+### Production Deployment
+
+Deploy the application with optimized production settings:
+
+```bash
+# Build production image
+docker build -f Dockerfile.prod -t cashly-api:prod .
+
+# Run production container
+docker run -d \
+  --name cashly-api \
+  -p 8080:8080 \
+  -e SPRING_PROFILES_ACTIVE=prod \
+  -e SPRING_DATASOURCE_URL=jdbc:mysql://mysql-host:3306/cashly_db \
+  -e SPRING_DATASOURCE_USERNAME=prod_user \
+  -e SPRING_DATASOURCE_PASSWORD=secure_password \
+  -e JWT_SECRET=your_jwt_secret \
+  --restart unless-stopped \
+  --health-cmd="wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1" \
+  --health-interval=30s \
+  --health-timeout=3s \
+  --health-retries=3 \
+  cashly-api:prod
+
+# View logs
+docker logs -f cashly-api
+
+# Check health
+docker inspect --format='{{.State.Health.Status}}' cashly-api
+```
+
+**Features:**
+- Multi-stage build (smaller image size)
+- Non-root user for security
+- G1GC garbage collector
+- Health checks included
+- Production JVM optimizations
+- Minimal Alpine-based runtime
+
+### Docker Compose Configuration
+
+The project includes a complete `compose.yaml` with services for all environments:
+
+```bash
+# Start MySQL only
+docker-compose up -d mysql
+
+# Start development environment
+docker-compose up -d app
+
+# Run tests
+docker-compose up app-test
+
+# View logs
+docker-compose logs -f app
+
+# Stop all services
+docker-compose down
+
+# Clean up volumes
+docker-compose down -v
+```
+
+### Environment Variables
+
+Configure the following environment variables for each environment:
+
+**Development:**
+```bash
+SPRING_PROFILES_ACTIVE=dev
+SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/cashly_db
+SPRING_DATASOURCE_USERNAME=cashly_user
+SPRING_DATASOURCE_PASSWORD=cashly_pass
+```
+
+**Testing:**
+```bash
+SPRING_PROFILES_ACTIVE=test
+TESTCONTAINERS_RYUK_DISABLED=false
+```
+
+**Production:**
+```bash
+SPRING_PROFILES_ACTIVE=prod
+SPRING_DATASOURCE_URL=jdbc:mysql://prod-host:3306/cashly_db
+SPRING_DATASOURCE_USERNAME=prod_user
+SPRING_DATASOURCE_PASSWORD=secure_password
+JWT_SECRET=your_secure_jwt_secret
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+```
+
+### Best Practices
+
+1. **Never commit sensitive data**: Use `.env` files (added to `.gitignore`) for local development
+2. **Use secrets management**: For production, use Docker secrets or external secret managers
+3. **Health checks**: Always configure health checks for production containers
+4. **Resource limits**: Set memory and CPU limits in production
+5. **Non-root user**: All production containers run as non-root user
+6. **Logging**: Use centralized logging for production containers
+
+### Production Deployment Example with Docker Compose
+
+Create a `docker-compose.prod.yaml`:
+
+```yaml
+version: '3.8'
+services:
+  cashly-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=${DB_URL}
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASS}
+    secrets:
+      - jwt_secret
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+secrets:
+  jwt_secret:
+    external: true
 ```
 
 ## 🔄 Development Workflow
