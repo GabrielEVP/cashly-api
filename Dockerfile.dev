@@ -6,7 +6,7 @@ FROM maven:3.9.9-amazoncorretto-24
 WORKDIR /app
 
 # Install useful development tools
-RUN yum install -y wget curl vim git && \
+RUN yum install -y wget vim git tar --allowerasing && \
     yum clean all
 
 # Copy Maven configuration files
@@ -26,9 +26,8 @@ EXPOSE 8080
 # Expose debug port for remote debugging
 EXPOSE 5005
 
-# Set development profile and enable debugging
+# Set development profile
 ENV SPRING_PROFILES_ACTIVE=dev
-ENV JAVA_TOOL_OPTIONS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
 
 # Run with Spring Boot DevTools for hot reload
 ENTRYPOINT ["./mvnw", "spring-boot:run", \

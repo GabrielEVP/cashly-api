@@ -5,8 +5,8 @@ FROM maven:3.9.9-amazoncorretto-24
 
 WORKDIR /app
 
-# Install Docker CLI for Testcontainers support
-RUN yum install -y docker wget && \
+# Install Docker CLI and required tools for Testcontainers support
+RUN yum install -y docker wget tar gzip && \
     yum clean all
 
 # Copy Maven configuration files
@@ -30,5 +30,5 @@ ENV SPRING_PROFILES_ACTIVE=test
 ENV TESTCONTAINERS_RYUK_DISABLED=false
 ENV TESTCONTAINERS_CHECKS_DISABLE=false
 
-# Default command runs all tests with coverage report
-CMD ["./mvnw", "clean", "test", "jacoco:report"]
+# Default command runs all tests
+CMD ["./mvnw", "clean", "test"]

@@ -18,9 +18,8 @@ CREATE INDEX idx_user_category ON expenses (user_id, category);
 CREATE INDEX idx_user_created ON expenses (user_id, created_at);
 
 -- Add constraints
-ALTER TABLE expenses 
-    ADD CONSTRAINT chk_amount_positive CHECK (amount >= 0),
-    ADD CONSTRAINT chk_category_valid CHECK (category IN ('FOOD', 'TRANSPORT', 'ENTERTAINMENT', 'UTILITIES', 'HEALTH', 'SHOPPING', 'OTHER')),
-    ADD CONSTRAINT chk_description_not_empty CHECK (TRIM(description) != ''),
-    ADD CONSTRAINT chk_user_id_not_empty CHECK (TRIM(user_id) != ''),
-    ADD CONSTRAINT chk_date_not_future CHECK (date <= CURDATE());
+ALTER TABLE expenses
+    ADD CONSTRAINT chk_expenses_amount_positive CHECK (amount >= 0),
+    ADD CONSTRAINT chk_expenses_category_valid CHECK (category IN ('FOOD', 'TRANSPORT', 'ENTERTAINMENT', 'UTILITIES', 'HEALTH', 'SHOPPING', 'OTHER')),
+    ADD CONSTRAINT chk_expenses_description_not_empty CHECK (TRIM(description) != ''),
+    ADD CONSTRAINT chk_expenses_user_id_not_empty CHECK (TRIM(user_id) != '');

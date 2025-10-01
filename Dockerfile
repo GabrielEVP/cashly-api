@@ -5,13 +5,16 @@ FROM maven:3.9.9-amazoncorretto-24 AS builder
 
 WORKDIR /app
 
+# Install required tools
+RUN yum install -y tar gzip && yum clean all
+
 # Copy Maven configuration files
 COPY pom.xml ./
 COPY .mvn .mvn
 COPY mvnw ./
 
 # Download dependencies (this layer will be cached)
-RUN ./mvnw dependency:go-offline -B
+RUN chmod +x ./mvnw && ./mvnw dependency:go-offline -B
 
 # Copy source code
 COPY src ./src

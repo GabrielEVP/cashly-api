@@ -18,9 +18,8 @@ CREATE INDEX idx_user_category ON incomes (user_id, category);
 CREATE INDEX idx_user_created ON incomes (user_id, created_at);
 
 -- Add constraints
-ALTER TABLE incomes 
-    ADD CONSTRAINT chk_amount_positive CHECK (amount >= 0),
-    ADD CONSTRAINT chk_category_valid CHECK (category IN ('SALARY', 'BUSINESS', 'INVESTMENT', 'OTHER')),
-    ADD CONSTRAINT chk_description_not_empty CHECK (TRIM(description) != ''),
-    ADD CONSTRAINT chk_user_id_not_empty CHECK (TRIM(user_id) != ''),
-    ADD CONSTRAINT chk_date_not_future CHECK (date <= CURDATE());
+ALTER TABLE incomes
+    ADD CONSTRAINT chk_incomes_amount_positive CHECK (amount >= 0),
+    ADD CONSTRAINT chk_incomes_category_valid CHECK (category IN ('SALARY', 'BUSINESS', 'INVESTMENT', 'OTHER')),
+    ADD CONSTRAINT chk_incomes_description_not_empty CHECK (TRIM(description) != ''),
+    ADD CONSTRAINT chk_incomes_user_id_not_empty CHECK (TRIM(user_id) != '');
