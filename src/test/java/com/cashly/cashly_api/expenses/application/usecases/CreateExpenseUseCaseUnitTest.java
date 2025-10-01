@@ -235,84 +235,57 @@ class CreateExpenseUseCaseUnitTest {
     }
     
     @Test
-    void should_CreateExpense_When_DescriptionIsEmpty() {
+    void should_ThrowException_When_DescriptionIsEmpty() {
         CreateExpenseRequest request = new CreateExpenseRequest(
-            new BigDecimal("50.00"), 
-            "", 
-            "FOOD_DINING", 
+            new BigDecimal("50.00"),
+            "",
+            "FOOD_DINING",
             "user123"
         );
-        
-        Expense savedExpense = new Expense(
-            ExpenseId.generate(),
-            new Amount(new BigDecimal("50.00")),
-            new Description(""),
-            new Category("FOOD_DINING"),
-            LocalDate.now(),
-            "user123"
+
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> createExpenseUseCase.execute(request)
         );
-        
-        when(expenseRepository.save(any(Expense.class))).thenReturn(savedExpense);
-        
-        ExpenseResponse response = createExpenseUseCase.execute(request);
-        
-        assertNotNull(response);
-        assertEquals("", response.getDescription());
-        verify(expenseRepository, times(1)).save(any(Expense.class));
+
+        assertEquals("Description cannot be empty", exception.getMessage());
+        verify(expenseRepository, never()).save(any(Expense.class));
     }
     
     @Test
-    void should_CreateExpense_When_CategoryIsEmpty() {
+    void should_ThrowException_When_CategoryIsEmpty() {
         CreateExpenseRequest request = new CreateExpenseRequest(
-            new BigDecimal("50.00"), 
-            "Some expense", 
-            "", 
+            new BigDecimal("50.00"),
+            "Some expense",
+            "",
             "user123"
         );
-        
-        Expense savedExpense = new Expense(
-            ExpenseId.generate(),
-            new Amount(new BigDecimal("50.00")),
-            new Description("Some expense"),
-            new Category(""),
-            LocalDate.now(),
-            "user123"
+
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> createExpenseUseCase.execute(request)
         );
-        
-        when(expenseRepository.save(any(Expense.class))).thenReturn(savedExpense);
-        
-        ExpenseResponse response = createExpenseUseCase.execute(request);
-        
-        assertNotNull(response);
-        assertEquals("", response.getCategory());
-        verify(expenseRepository, times(1)).save(any(Expense.class));
+
+        assertEquals("Category cannot be empty", exception.getMessage());
+        verify(expenseRepository, never()).save(any(Expense.class));
     }
     
     @Test
-    void should_CreateExpense_When_UserIdIsEmpty() {
+    void should_ThrowException_When_UserIdIsEmpty() {
         CreateExpenseRequest request = new CreateExpenseRequest(
-            new BigDecimal("50.00"), 
-            "Some expense", 
-            "FOOD_DINING", 
+            new BigDecimal("50.00"),
+            "Some expense",
+            "FOOD_DINING",
             ""
         );
-        
-        Expense savedExpense = new Expense(
-            ExpenseId.generate(),
-            new Amount(new BigDecimal("50.00")),
-            new Description("Some expense"),
-            new Category("FOOD_DINING"),
-            LocalDate.now(),
-            ""
+
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> createExpenseUseCase.execute(request)
         );
-        
-        when(expenseRepository.save(any(Expense.class))).thenReturn(savedExpense);
-        
-        ExpenseResponse response = createExpenseUseCase.execute(request);
-        
-        assertNotNull(response);
-        assertEquals("", response.getUserId());
-        verify(expenseRepository, times(1)).save(any(Expense.class));
+
+        assertEquals("User ID cannot be empty", exception.getMessage());
+        verify(expenseRepository, never()).save(any(Expense.class));
     }
     
     @Test

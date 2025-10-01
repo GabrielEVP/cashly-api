@@ -249,49 +249,49 @@ class GetExpensesByUserUseCaseUnitTest {
     }
     
     @Test
-    void should_ReturnCorrectResponsesForExpensesWithEmptyDescriptions_When_UserHasEmptyDescriptionExpenses() {
-        List<Expense> emptyDescriptionExpenses = Collections.singletonList(
+    void should_ReturnCorrectResponsesForExpensesWithMinimalDescriptions_When_UserHasMinimalDescriptionExpenses() {
+        List<Expense> minimalDescriptionExpenses = Collections.singletonList(
             new Expense(
                 ExpenseId.generate(),
                 new Amount(new BigDecimal("50.00")),
-                new Description(""),
+                new Description("Expense"),
                 new Category("OTHER"),
                 LocalDate.now(),
                 validUserId
             )
         );
-        
-        when(expenseRepository.findByUserId(validUserId)).thenReturn(emptyDescriptionExpenses);
-        
+
+        when(expenseRepository.findByUserId(validUserId)).thenReturn(minimalDescriptionExpenses);
+
         List<ExpenseResponse> responses = getExpensesByUserUseCase.execute(validUserId);
-        
+
         assertNotNull(responses);
         assertEquals(1, responses.size());
-        assertEquals("", responses.get(0).getDescription());
-        
+        assertEquals("Expense", responses.get(0).getDescription());
+
         verify(expenseRepository, times(1)).findByUserId(validUserId);
     }
     
     @Test
-    void should_ReturnCorrectResponsesForExpensesWithEmptyCategories_When_UserHasEmptyCategoryExpenses() {
-        List<Expense> emptyCategoryExpenses = Collections.singletonList(
+    void should_ReturnCorrectResponsesForExpensesWithOtherCategory_When_UserHasOtherCategoryExpenses() {
+        List<Expense> otherCategoryExpenses = Collections.singletonList(
             new Expense(
                 ExpenseId.generate(),
                 new Amount(new BigDecimal("75.00")),
-                new Description("No category expense"),
-                new Category(""),
+                new Description("Other category expense"),
+                new Category("OTHER"),
                 LocalDate.now(),
                 validUserId
             )
         );
-        
-        when(expenseRepository.findByUserId(validUserId)).thenReturn(emptyCategoryExpenses);
-        
+
+        when(expenseRepository.findByUserId(validUserId)).thenReturn(otherCategoryExpenses);
+
         List<ExpenseResponse> responses = getExpensesByUserUseCase.execute(validUserId);
-        
+
         assertNotNull(responses);
         assertEquals(1, responses.size());
-        assertEquals("", responses.get(0).getCategory());
+        assertEquals("OTHER", responses.get(0).getCategory());
         
         verify(expenseRepository, times(1)).findByUserId(validUserId);
     }

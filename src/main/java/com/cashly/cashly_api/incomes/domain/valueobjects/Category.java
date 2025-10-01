@@ -31,7 +31,7 @@ public class Category {
     }
     
     public String getValue() {
-        return value;
+        return new String(value);
     }
     
     public boolean isSalary() {

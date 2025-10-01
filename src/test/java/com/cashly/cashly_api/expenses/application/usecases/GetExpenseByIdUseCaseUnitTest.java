@@ -116,21 +116,21 @@ class GetExpenseByIdUseCaseUnitTest {
             new ExpenseId(UUID.fromString(validExpenseId)),
             new Amount(BigDecimal.ZERO),
             new Description("Zero amount test"),
-            new Category("TEST"),
+            new Category("OTHER"),
             LocalDate.now(),
             "user456"
         );
-        
+
         when(expenseRepository.findById(any(ExpenseId.class))).thenReturn(Optional.of(zeroAmountExpense));
-        
+
         ExpenseResponse response = getExpenseByIdUseCase.execute(validExpenseId);
-        
+
         assertNotNull(response);
         assertEquals(BigDecimal.ZERO, response.getAmount());
         assertEquals("Zero amount test", response.getDescription());
-        assertEquals("TEST", response.getCategory());
+        assertEquals("OTHER", response.getCategory());
         assertEquals("user456", response.getUserId());
-        
+
         verify(expenseRepository, times(1)).findById(any(ExpenseId.class));
     }
     
@@ -160,72 +160,72 @@ class GetExpenseByIdUseCaseUnitTest {
     }
     
     @Test
-    void should_ReturnCorrectResponse_When_ExpenseHasEmptyDescription() {
-        Expense emptyDescriptionExpense = new Expense(
+    void should_ReturnCorrectResponse_When_ExpenseHasMinimalDescription() {
+        Expense minimalDescriptionExpense = new Expense(
             new ExpenseId(UUID.fromString(validExpenseId)),
             new Amount(new BigDecimal("100.00")),
-            new Description(""),
+            new Description("Expense"),
             new Category("OTHER"),
             LocalDate.now(),
             "user123"
         );
-        
-        when(expenseRepository.findById(any(ExpenseId.class))).thenReturn(Optional.of(emptyDescriptionExpense));
-        
+
+        when(expenseRepository.findById(any(ExpenseId.class))).thenReturn(Optional.of(minimalDescriptionExpense));
+
         ExpenseResponse response = getExpenseByIdUseCase.execute(validExpenseId);
-        
+
         assertNotNull(response);
-        assertEquals("", response.getDescription());
+        assertEquals("Expense", response.getDescription());
         assertEquals(new BigDecimal("100.00"), response.getAmount());
         assertEquals("OTHER", response.getCategory());
-        
+
         verify(expenseRepository, times(1)).findById(any(ExpenseId.class));
     }
     
     @Test
-    void should_ReturnCorrectResponse_When_ExpenseHasEmptyCategory() {
-        Expense emptyCategoryExpense = new Expense(
+    void should_ReturnCorrectResponse_When_ExpenseHasOtherCategory() {
+        Expense otherCategoryExpense = new Expense(
             new ExpenseId(UUID.fromString(validExpenseId)),
             new Amount(new BigDecimal("200.00")),
             new Description("Test expense"),
-            new Category(""),
+            new Category("OTHER"),
             LocalDate.now(),
             "user123"
         );
-        
-        when(expenseRepository.findById(any(ExpenseId.class))).thenReturn(Optional.of(emptyCategoryExpense));
-        
+
+        when(expenseRepository.findById(any(ExpenseId.class))).thenReturn(Optional.of(otherCategoryExpense));
+
         ExpenseResponse response = getExpenseByIdUseCase.execute(validExpenseId);
-        
+
         assertNotNull(response);
-        assertEquals("", response.getCategory());
+        assertEquals("OTHER", response.getCategory());
         assertEquals(new BigDecimal("200.00"), response.getAmount());
         assertEquals("Test expense", response.getDescription());
-        
+
         verify(expenseRepository, times(1)).findById(any(ExpenseId.class));
     }
     
     @Test
-    void should_ReturnCorrectResponse_When_ExpenseHasEmptyUserId() {
-        Expense emptyUserIdExpense = new Expense(
+    void should_ReturnCorrectResponse_When_ExpenseHasValidUserId() {
+        Expense validUserIdExpense = new Expense(
             new ExpenseId(UUID.fromString(validExpenseId)),
             new Amount(new BigDecimal("300.00")),
-            new Description("No user expense"),
+            new Description("User expense"),
             new Category("FOOD_DINING"),
             LocalDate.now(),
-            ""
+            "user999"
         );
-        
-        when(expenseRepository.findById(any(ExpenseId.class))).thenReturn(Optional.of(emptyUserIdExpense));
-        
+
+        when(expenseRepository.findById(any(ExpenseId.class))).thenReturn(Optional.of(validUserIdExpense));
+
         ExpenseResponse response = getExpenseByIdUseCase.execute(validExpenseId);
-        
+
         assertNotNull(response);
-        assertEquals("", response.getUserId());
+        assertEquals("user999", response.getUserId());
         assertEquals(new BigDecimal("300.00"), response.getAmount());
-        assertEquals("No user expense", response.getDescription());
+        assertEquals("User expense", response.getDescription());
         assertEquals("FOOD_DINING", response.getCategory());
-        
+
         verify(expenseRepository, times(1)).findById(any(ExpenseId.class));
     }
     

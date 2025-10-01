@@ -195,20 +195,15 @@ class CategoryAnalysisUnitTest {
     }
 
     @Test
-    void should_HandleNegativeAmount_When_CreatingAnalysis() {
-        Amount negativeAmount = new Amount(new BigDecimal("-500.00"));
+    void should_ThrowException_When_CreatingAnalysisWithNegativeAmount() {
         BigDecimal negativePercentage = new BigDecimal("-10.00");
-        
-        CategoryAnalysis analysis = new CategoryAnalysis(
-            testCategory,
-            negativeAmount,
-            negativePercentage
+
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> new Amount(new BigDecimal("-500.00"))
         );
 
-        assertNotNull(analysis);
-        assertEquals(testCategory, analysis.getCategory());
-        assertEquals(negativeAmount, analysis.getAmount());
-        assertEquals(negativePercentage, analysis.getPercentageOfTotal());
+        assertEquals("Amount cannot be negative", exception.getMessage());
     }
 
     @Test

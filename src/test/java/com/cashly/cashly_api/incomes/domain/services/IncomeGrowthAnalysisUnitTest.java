@@ -117,7 +117,7 @@ class IncomeGrowthAnalysisUnitTest {
         );
 
         Amount growthAmount = analysis.getGrowthAmount();
-        assertEquals(BigDecimal.ZERO, growthAmount.getValue());
+        assertEquals(0, growthAmount.getValue().compareTo(BigDecimal.ZERO));
     }
 
     @Test

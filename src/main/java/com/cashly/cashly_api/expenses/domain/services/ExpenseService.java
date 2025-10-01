@@ -102,7 +102,7 @@ public class ExpenseService {
         Amount actualExpense = expenseRepository.calculateTotalExpenseForPeriod(userId, startDate, endDate);
         
         BigDecimal utilizationPercentage = budgetLimit.getValue().compareTo(BigDecimal.ZERO) == 0 ?
-            BigDecimal.valueOf(100) :
+            new BigDecimal("100.00") :
             actualExpense.getValue()
                 .divide(budgetLimit.getValue(), 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100))
@@ -140,9 +140,9 @@ public class ExpenseService {
 
     private BigDecimal calculateChangePercentage(BigDecimal previousAmount, BigDecimal currentAmount) {
         if (previousAmount.compareTo(BigDecimal.ZERO) == 0) {
-            return currentAmount.compareTo(BigDecimal.ZERO) == 0 ? 
-                BigDecimal.ZERO : 
-                BigDecimal.valueOf(100);
+            return currentAmount.compareTo(BigDecimal.ZERO) == 0 ?
+                BigDecimal.ZERO :
+                new BigDecimal("100.00");
         }
 
         return currentAmount.subtract(previousAmount)
@@ -219,15 +219,15 @@ public class ExpenseService {
         }
 
         public Category getCategory() {
-            return category;
+            return category == null ? null : new Category(category.getValue());
         }
 
         public Amount getAmount() {
-            return amount;
+            return new Amount(amount.getValue());
         }
 
         public BigDecimal getPercentageOfTotal() {
-            return percentageOfTotal;
+            return new BigDecimal(percentageOfTotal.toString());
         }
 
         @Override
@@ -278,15 +278,15 @@ public class ExpenseService {
         }
 
         public Amount getBudgetLimit() {
-            return budgetLimit;
+            return new Amount(budgetLimit.getValue());
         }
 
         public Amount getActualExpense() {
-            return actualExpense;
+            return new Amount(actualExpense.getValue());
         }
 
         public Amount getRemaining() {
-            return remaining;
+            return new Amount(remaining.getValue());
         }
 
         public BigDecimal getUtilizationPercentage() {

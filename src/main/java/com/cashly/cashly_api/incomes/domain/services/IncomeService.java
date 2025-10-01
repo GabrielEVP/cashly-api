@@ -108,9 +108,9 @@ public class IncomeService {
 
     private BigDecimal calculateGrowthPercentage(BigDecimal previousAmount, BigDecimal currentAmount) {
         if (previousAmount.compareTo(BigDecimal.ZERO) == 0) {
-            return currentAmount.compareTo(BigDecimal.ZERO) == 0 ? 
-                BigDecimal.ZERO : 
-                BigDecimal.valueOf(100);
+            return currentAmount.compareTo(BigDecimal.ZERO) == 0 ?
+                BigDecimal.ZERO :
+                new BigDecimal("100.00");
         }
 
         return currentAmount.subtract(previousAmount)

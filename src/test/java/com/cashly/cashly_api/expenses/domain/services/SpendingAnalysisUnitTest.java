@@ -117,7 +117,7 @@ class SpendingAnalysisUnitTest {
         );
 
         Amount changeAmount = analysis.getChangeAmount();
-        assertEquals(BigDecimal.ZERO, changeAmount.getValue());
+        assertEquals(0, changeAmount.getValue().compareTo(BigDecimal.ZERO));
     }
 
     @Test

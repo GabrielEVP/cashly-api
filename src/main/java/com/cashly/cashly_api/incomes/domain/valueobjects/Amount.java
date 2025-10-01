@@ -17,7 +17,7 @@ public class Amount {
     }
     
     public BigDecimal getValue() {
-        return value;
+        return new BigDecimal(value.toString());
     }
     
     public Amount add(Amount other) {
