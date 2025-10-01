@@ -450,13 +450,6 @@ type(scope): description
 
 **Types**: feat, fix, docs, style, refactor, test, chore
 
-### Pull Request Checklist
-- [ ] Tests added/updated and passing
-- [ ] Documentation updated
-- [ ] Code follows project standards
-- [ ] No breaking changes (or documented)
-- [ ] Security considerations addressed
-
 ## 📚 Additional Resources
 
 - [Clean Architecture by Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
@@ -468,12 +461,6 @@ type(scope): description
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👥 Team
-
-- **Lead Developer**: [Your Name](mailto:your.email@example.com)
-- **Architecture Consultant**: [Architect Name](mailto:architect@example.com)
-- **DevOps Engineer**: [DevOps Name](mailto:devops@example.com)
 
 ---
 
