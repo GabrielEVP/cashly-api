@@ -113,24 +113,39 @@ This project implements **Clean Architecture** (also known as Hexagonal Architec
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/cashly-api.git
+   git clone https://github.com/GabrielEVP/cashly-api.git
    cd cashly-api
    ```
 
-2. **Start the database**
+2. **Choose your environment and start:**
+
+   **🚀 Production (Default):**
    ```bash
-   docker-compose up -d mysql
+   docker compose up --build
    ```
 
-3. **Build and run the application**
+   **🔧 Development (Hot-reload + Debug):**
    ```bash
-   ./mvnw spring-boot:run
+   DOCKERFILE=Dockerfile.dev SPRING_PROFILES_ACTIVE=dev docker compose up --build
    ```
 
-4. **Verify the application**
+   **🧪 Testing:**
+   ```bash
+   docker compose --profile test up --build
+   ```
+
+3. **Verify the application**
    ```bash
    curl http://localhost:8080/actuator/health
+   # Response: {"status":"UP"}
    ```
+
+> 💡 **Pro Tip**: For development, set environment variables in `.env` file:
+> ```bash
+> echo "DOCKERFILE=Dockerfile.dev" > .env
+> echo "SPRING_PROFILES_ACTIVE=dev" >> .env
+> docker compose up --build
+> ```
 
 ## 📁 Project Structure
 
@@ -316,72 +331,219 @@ GET    /api/v1/accounts/{accountId}/transactions
 - **Swagger UI**: http://localhost:8080/swagger-ui.html
 - **OpenAPI Spec**: http://localhost:8080/v3/api-docs
 
-## Docker Setup
+## 🐳 Docker Setup
 
-The project uses Docker Compose with profile-based container management for different environments. This approach provides flexibility to run specific services based on your development needs.
+The project provides **three optimized Docker environments** for different use cases. Each environment is containerized and ready to use with simple commands.
 
-### Container Profiles
+### 📋 Available Environments
 
-| Profile | Services | Description | Use Case |
-|---------|----------|-------------|----------|
-| `app` | Application container | Spring Boot application with hot-reload | Development with containerized app |
-| `database` | MySQL database | Development database with persistent storage | Local database for development |
-| `test` | Test database + Test runner | Isolated testing environment | Running automated tests |
+| Environment | Dockerfile | Profile | Description | Use Case |
+|-------------|------------|---------|-------------|----------|
+| **🚀 Production** | `Dockerfile` | `prod` | Optimized production build | **Deployment, Production** |
+| **🔧 Development** | `Dockerfile.dev` | `dev` | Hot-reload + Debug support | **Local development** |
+| **🧪 Testing** | `Dockerfile.test` | `test` | Isolated test environment | **Automated testing** |
 
-### Quick Start Commands
+---
 
-#### Development Environment (Recommended)
+## 🚀 Production Environment (Default)
+
+**Best for**: Production deployment, staging, performance testing
+
 ```bash
-# Start application + database
-docker compose --profile app --profile database up --build
+# Start production environment (DEFAULT)
+docker compose up --build
 
 # Run in background
-docker compose --profile app --profile database up -d --build
+docker compose up -d --build
+
+# Check health
+curl http://localhost:8080/actuator/health
 ```
 
-#### Database Only
+**✨ Features:**
+- ✅ Multi-stage optimized build
+- ✅ Minimal runtime image (Alpine)
+- ✅ Non-root user security
+- ✅ Production JVM optimizations
+- ✅ Health checks enabled
+- ✅ No development tools
+
+---
+
+## 🔧 Development Environment
+
+**Best for**: Local development, debugging, hot-reload
+
 ```bash
-# Start only MySQL database (useful for IDE development)
-docker compose --profile database up -d
+# Start development environment
+DOCKERFILE=Dockerfile.dev SPRING_PROFILES_ACTIVE=dev docker compose up --build
 
-# Connect to database
-mysql -h localhost -P 3306 -u myuser -p mydatabase
+# Or create .env file with:
+echo "DOCKERFILE=Dockerfile.dev" > .env
+echo "SPRING_PROFILES_ACTIVE=dev" >> .env
+docker compose up --build
 ```
 
-#### Testing Environment
+**✨ Features:**
+- ✅ **Hot Reload** - Changes reflect automatically
+- ✅ **Remote Debug** - Port 5005 for IDE debugging
+- ✅ **LiveReload** - Port 35729 for frontend
+- ✅ **Development Tools** - vim, git, wget included
+- ✅ **Source Mounting** - Live code synchronization
+- ✅ **Dev Profile** - Development database settings
+
+**🔌 Debug Setup (IntelliJ/VS Code):**
+```
+Host: localhost
+Port: 5005
+Transport: Socket
+Debugger mode: Attach
+```
+
+---
+
+## 🧪 Testing Environment
+
+**Best for**: Running tests, CI/CD pipelines, test automation
+
 ```bash
 # Run complete test suite
 docker compose --profile test up --build
 
-# Run tests in background
+# Run tests in background and check results
 docker compose --profile test up -d --build
+docker compose logs app-test
 ```
 
-#### Container Management
+**✨ Features:**
+- ✅ **Isolated Test DB** - Separate test database (port 3307)
+- ✅ **Test Profile** - Test-specific configurations
+- ✅ **Maven Test Runner** - Executes complete test suite
+- ✅ **CI/CD Ready** - Perfect for automated pipelines
+- ✅ **No Side Effects** - Doesn't affect dev/prod data
+
+---
+
+## 🛠️ Container Management
+
+### Basic Operations
+
 ```bash
 # Stop all containers
 docker compose down
 
-# Stop and remove volumes
+# Stop and remove volumes (⚠️ deletes data)
 docker compose down -v
 
-# View logs
+# Rebuild without cache
+docker compose build --no-cache
+
+# View logs (all services)
 docker compose logs -f
 
 # View specific service logs
-docker compose logs -f mysql
+docker compose logs app
+docker compose logs mysql
+docker compose logs app-test  # for test environment
 ```
 
-### Environment Configuration
+### Advanced Operations
 
-The project uses environment variables for configuration. Copy the example file and customize:
+```bash
+# Enter container shell (development)
+docker compose exec app bash
+
+# Run specific commands in container
+docker compose exec app ./mvnw clean compile
+docker compose exec app ./mvnw test
+
+# Check container resource usage
+docker stats
+```
+
+---
+
+## ⚙️ Environment Configuration
+
+### Key Variables
+
+| Variable | Default | Dev Override | Description |
+|----------|---------|--------------|-------------|
+| `DOCKERFILE` | `Dockerfile` | `Dockerfile.dev` | Which Dockerfile to use |
+| `SPRING_PROFILES_ACTIVE` | `prod` | `dev` | Spring Boot profile |
+| `SERVER_PORT` | `8080` | `8080` | Application port |
+| `DB_NAME` | `mydatabase` | `mydatabase` | Database name |
+| `DB_USER` | `myuser` | `myuser` | Database user |
+| `DB_PASSWORD` | `secret` | `secret` | Database password |
+| `JWT_SECRET` | `default...` | `default...` | JWT signing secret |
+
+### Configuration Files
 
 ```bash
 # Copy environment template
 cp .env.example .env
 
-# Edit configuration
+# Edit configuration for your needs
 nano .env
+
+# Example .env for development:
+DOCKERFILE=Dockerfile.dev
+SPRING_PROFILES_ACTIVE=dev
+LOG_LEVEL=DEBUG
+```
+
+---
+
+## 🎯 Quick Reference Commands
+
+### Development Workflow
+
+```bash
+# 1. Clone and setup
+git clone https://github.com/GabrielEVP/cashly-api.git
+cd cashly-api
+
+# 2. Start development environment
+DOCKERFILE=Dockerfile.dev SPRING_PROFILES_ACTIVE=dev docker compose up --build
+
+# 3. Make changes and see them automatically reload!
+# Edit files in src/ - changes will be reflected immediately
+
+# 4. Run tests
+docker compose --profile test up --build
+```
+
+### Production Deployment
+
+```bash
+# 1. Production build and run
+docker compose up -d --build
+
+# 2. Check health
+curl http://localhost:8080/actuator/health
+
+# 3. Monitor logs
+docker compose logs -f app
+
+# 4. Stop when needed
+docker compose down
+```
+
+### Troubleshooting
+
+```bash
+# Reset everything
+docker compose down -v
+docker system prune -f
+
+# Check container status
+docker compose ps
+
+# View detailed logs
+docker compose logs app --tail=50
+
+# Enter container for debugging
+docker compose exec app bash
 ```
 
 #### Key Environment Variables
@@ -695,6 +857,48 @@ type(scope): description
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🚀 Docker Quick Reference Card
+
+### 🎯 One-Command Setup for Each Environment:
+
+```bash
+# 🚀 PRODUCTION (Default - Optimized for deployment)
+docker compose up --build
+
+# 🔧 DEVELOPMENT (Hot-reload + Debug)
+DOCKERFILE=Dockerfile.dev SPRING_PROFILES_ACTIVE=dev docker compose up --build
+
+# 🧪 TESTING (Automated test suite)
+docker compose --profile test up --build
+```
+
+### 🔥 Key Features by Environment:
+
+| Feature | 🚀 Production | 🔧 Development | 🧪 Testing |
+|---------|---------------|----------------|-------------|
+| **Optimized Build** | ✅ Multi-stage | ❌ Single stage | ❌ Single stage |
+| **Image Size** | ✅ Minimal (Alpine) | ❌ Full (Maven) | ❌ Full (Maven) |
+| **Hot Reload** | ❌ Static | ✅ DevTools | ❌ N/A |
+| **Debug Port** | ❌ No | ✅ Port 5005 | ❌ No |
+| **Security** | ✅ Non-root user | ❌ Root user | ❌ Root user |
+| **Database** | ✅ Port 3306 | ✅ Port 3306 | ✅ Port 3307 (isolated) |
+| **Use Case** | Production deploy | Local coding | CI/CD pipelines |
+
+### 💡 Pro Tips:
+
+- **Set `.env` file for persistent dev config**:
+  ```bash
+  echo "DOCKERFILE=Dockerfile.dev" > .env
+  echo "SPRING_PROFILES_ACTIVE=dev" >> .env
+  ```
+
+- **Check health**: `curl http://localhost:8080/actuator/health`
+- **Debug setup**: Connect IDE to `localhost:5005`
+- **View logs**: `docker compose logs -f app`
+- **Clean reset**: `docker compose down -v && docker system prune -f`
 
 ---
 
