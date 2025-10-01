@@ -2,7 +2,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: ${DOCKERFILE:-Dockerfile}
     container_name: ${COMPOSE_PROJECT_NAME:-cashly-api}-app
     ports:
       - "${SERVER_PORT:-8080}:8080"
@@ -11,20 +11,15 @@ services:
       - SPRING_DATASOURCE_USERNAME=${DB_USER:-myuser}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-secret}
       - SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
       - JWT_SECRET=${JWT_SECRET:-defaultSecretKeyThatIsAtLeast256BitsLongForHS256AlgorithmSecurity}
       - JWT_ACCESS_TOKEN_EXPIRATION=${JWT_ACCESS_TOKEN_EXPIRATION:-900000}
       - JWT_REFRESH_TOKEN_EXPIRATION=${JWT_REFRESH_TOKEN_EXPIRATION:-604800000}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     depends_on:
       - mysql
-    volumes:
-      - .:/app
-      - maven_cache:/root/.m2
     networks:
       - cashly-network
-    profiles:
-      - ${APP_PROFILE:-app}
 
   mysql:
     image: 'mysql:8.0'
@@ -41,8 +36,6 @@ services:
       - ./db/init:/docker-entrypoint-initdb.d
     networks:
       - cashly-network
-    profiles:
-      - ${DATABASE_PROFILE:-database}
 
   # Test database (only enabled when using test profile)
   mysql-test:
