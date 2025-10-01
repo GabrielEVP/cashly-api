@@ -316,138 +316,196 @@ GET    /api/v1/accounts/{accountId}/transactions
 - **Swagger UI**: http://localhost:8080/swagger-ui.html
 - **OpenAPI Spec**: http://localhost:8080/v3/api-docs
 
-## 🐳 Docker Setup
+## Docker Setup
 
-The project includes three specialized Dockerfiles for different environments:
+The project uses Docker Compose with profile-based container management for different environments. This approach provides flexibility to run specific services based on your development needs.
 
-### Dockerfile Overview
+### Container Profiles
 
-| Dockerfile | Purpose | Use Case | Features |
-|------------|---------|----------|----------|
-| `Dockerfile.dev` | Development | Local development with hot-reload | Debug port (5005), Spring DevTools, development tools |
-| `Dockerfile.test` | Testing | Running tests in isolated environment | Testcontainers support, coverage reports |
-| `Dockerfile.prod` | Production | Production deployment | Optimized image, security hardening, health checks |
+| Profile | Services | Description | Use Case |
+|---------|----------|-------------|----------|
+| `app` | Application container | Spring Boot application with hot-reload | Development with containerized app |
+| `database` | MySQL database | Development database with persistent storage | Local database for development |
+| `test` | Test database + Test runner | Isolated testing environment | Running automated tests |
 
-### Development Environment
+### Quick Start Commands
 
-Run the application with hot-reload and debugging capabilities:
-
+#### Development Environment (Recommended)
 ```bash
-# Build and run development container
-docker build -f Dockerfile.dev -t cashly-api:dev .
-docker run -p 8080:8080 -p 5005:5005 \
-  -e SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/cashly_db \
-  -e SPRING_DATASOURCE_USERNAME=cashly_user \
-  -e SPRING_DATASOURCE_PASSWORD=cashly_pass \
-  cashly-api:dev
+# Start application + database
+docker compose --profile app --profile database up --build
 
-# Using Docker Compose (recommended)
-docker-compose up -d
+# Run in background
+docker compose --profile app --profile database up -d --build
 ```
 
-**Features:**
-- Hot-reload with Spring Boot DevTools
-- Remote debugging on port 5005
-- Development tools pre-installed
-- Connected to local MySQL database
-
-### Testing Environment
-
-Run all tests in an isolated container:
-
+#### Database Only
 ```bash
-# Build test container
-docker build -f Dockerfile.test -t cashly-api:test .
+# Start only MySQL database (useful for IDE development)
+docker compose --profile database up -d
 
-# Run all tests with coverage
-docker run --rm \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v $(pwd)/target:/app/target \
-  cashly-api:test
-
-# Run specific test suites
-docker run --rm cashly-api:test ./mvnw test -Dtest="**/*UnitTest"
-docker run --rm cashly-api:test ./mvnw test -Dtest="**/*IntegrationTest"
-docker run --rm cashly-api:test ./mvnw test -Dtest="**/*E2ETest"
-
-# Using Docker Compose
-docker-compose up app-test
+# Connect to database
+mysql -h localhost -P 3306 -u myuser -p mydatabase
 ```
 
-**Features:**
-- Testcontainers support for integration tests
-- JaCoCo coverage reports
-- Isolated test environment
-- Docker socket mounted for Testcontainers
-
-### Production Deployment
-
-Deploy the application with optimized production settings:
-
+#### Testing Environment
 ```bash
-# Build production image
-docker build -f Dockerfile.prod -t cashly-api:prod .
+# Run complete test suite
+docker compose --profile test up --build
 
-# Run production container
-docker run -d \
-  --name cashly-api \
-  -p 8080:8080 \
-  -e SPRING_PROFILES_ACTIVE=prod \
-  -e SPRING_DATASOURCE_URL=jdbc:mysql://mysql-host:3306/cashly_db \
-  -e SPRING_DATASOURCE_USERNAME=prod_user \
-  -e SPRING_DATASOURCE_PASSWORD=secure_password \
-  -e JWT_SECRET=your_jwt_secret \
-  --restart unless-stopped \
-  --health-cmd="wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1" \
-  --health-interval=30s \
-  --health-timeout=3s \
-  --health-retries=3 \
-  cashly-api:prod
+# Run tests in background
+docker compose --profile test up -d --build
+```
+
+#### Container Management
+```bash
+# Stop all containers
+docker compose down
+
+# Stop and remove volumes
+docker compose down -v
 
 # View logs
-docker logs -f cashly-api
+docker compose logs -f
 
-# Check health
-docker inspect --format='{{.State.Health.Status}}' cashly-api
+# View specific service logs
+docker compose logs -f mysql
 ```
 
-**Features:**
-- Multi-stage build (smaller image size)
-- Non-root user for security
-- G1GC garbage collector
-- Health checks included
-- Production JVM optimizations
-- Minimal Alpine-based runtime
+### Environment Configuration
 
-### Docker Compose Configuration
-
-The project includes a complete `compose.yaml` with services for all environments:
+The project uses environment variables for configuration. Copy the example file and customize:
 
 ```bash
-# Start MySQL only
-docker-compose up -d mysql
+# Copy environment template
+cp .env.example .env
+
+# Edit configuration
+nano .env
+```
+
+#### Key Environment Variables
+
+```bash
+# Container profiles (comma-separated)
+DOCKER_PROFILES=app,database
+
+# Database configuration
+DB_HOST=mysql
+DB_PORT=3306
+DB_NAME=mydatabase
+DB_USER=myuser
+DB_PASSWORD=secret
+
+# Application configuration
+SERVER_PORT=8080
+SPRING_PROFILES_ACTIVE=dev
+
+# JWT configuration
+JWT_SECRET=your-secret-key
+JWT_ACCESS_TOKEN_EXPIRATION=900000
+```
+
+### Development Workflow
+
+#### 1. First Time Setup
+```bash
+# Clone and setup
+git clone <repository>
+cd cashly-api
+cp .env.example .env
 
 # Start development environment
-docker-compose up -d app
-
-# Run tests
-docker-compose up app-test
-
-# View logs
-docker-compose logs -f app
-
-# Stop all services
-docker-compose down
-
-# Clean up volumes
-docker-compose down -v
+docker compose --profile app --profile database up --build
 ```
 
-### Environment Variables
+#### 2. Daily Development
+```bash
+# Start services
+docker compose --profile app --profile database up -d
 
-Configure the following environment variables for each environment:
+# View logs
+docker compose logs -f app
 
-**Development:**
+# Run tests
+docker compose --profile test up --build
+
+# Stop when done
+docker compose down
+```
+
+#### 3. Database Only Development
+```bash
+# Start only database (run app from IDE)
+docker compose --profile database up -d
+
+# Your IDE connects to: localhost:3306
+# Database: mydatabase
+# User: myuser
+# Password: secret
+```
+
+### Container Features
+
+#### Development Container (`app` profile)
+- Hot-reload with Spring Boot DevTools
+- Debug port exposed (5005)
+- Volume mounted for live code changes
+- Connected to development database
+
+#### Database Container (`database` profile)
+- MySQL 8.0 with persistent storage
+- Initialization scripts support
+- Development user and database pre-configured
+- Exposed on localhost:3306
+
+#### Test Container (`test` profile)
+- Isolated test database (port 3307)
+- Testcontainers support
+- Coverage reports generation
+- Clean environment for each test run
+
+### Troubleshooting
+
+#### Common Issues
+
+**Port conflicts:**
+```bash
+# Check what's using port 3306
+lsof -i :3306
+
+# Change port in .env file
+DB_PORT=3307
+```
+
+**Permission issues:**
+```bash
+# Fix Docker permissions
+sudo usermod -aG docker $USER
+logout # and login again
+```
+
+**Database connection issues:**
+```bash
+# Check database logs
+docker compose logs mysql
+
+# Verify database is ready
+docker compose exec mysql mysql -u myuser -p mydatabase
+```
+
+#### Health Checks
+
+```bash
+# Check container status
+docker compose ps
+
+# Check application health
+curl http://localhost:8080/actuator/health
+
+# Check database connectivity
+docker compose exec mysql mysqladmin ping -h localhost -u myuser -p
+```
 ```bash
 SPRING_PROFILES_ACTIVE=dev
 SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/cashly_db
