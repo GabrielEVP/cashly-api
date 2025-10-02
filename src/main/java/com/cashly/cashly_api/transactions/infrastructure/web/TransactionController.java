@@ -37,87 +37,38 @@ public class TransactionController {
 
     @PostMapping
     public ResponseEntity<TransactionResponse> createTransaction(@RequestBody CreateTransactionRequest request) {
-        try {
-            TransactionResponse response = createTransactionUseCase.execute(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        TransactionResponse response = createTransactionUseCase.execute(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<TransactionResponse> getTransactionById(@PathVariable String id) {
-        try {
-            TransactionResponse response = getTransactionByIdUseCase.execute(id);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (RuntimeException e) {
-            if (e.getMessage().contains("not found")) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        TransactionResponse response = getTransactionByIdUseCase.execute(id);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping
     public ResponseEntity<List<TransactionResponse>> getTransactionsByUser(@RequestParam String userId) {
-        try {
-            List<TransactionResponse> responses = getTransactionsByUserUseCase.execute(userId);
-            return ResponseEntity.ok(responses);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        List<TransactionResponse> responses = getTransactionsByUserUseCase.execute(userId);
+        return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/account/{accountId}")
     public ResponseEntity<List<TransactionResponse>> getTransactionsByAccount(@PathVariable String accountId) {
-        try {
-            List<TransactionResponse> responses = getTransactionsByAccountUseCase.execute(accountId);
-            return ResponseEntity.ok(responses);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        List<TransactionResponse> responses = getTransactionsByAccountUseCase.execute(accountId);
+        return ResponseEntity.ok(responses);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<TransactionResponse> updateTransactionStatus(@PathVariable String id,
                                                                        @RequestBody UpdateTransactionRequest request) {
-        try {
-            TransactionResponse response = updateTransactionStatusUseCase.execute(id, request);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        } catch (RuntimeException e) {
-            if (e.getMessage().contains("not found")) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        TransactionResponse response = updateTransactionStatusUseCase.execute(id, request);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/{id}/cancel")
     public ResponseEntity<TransactionResponse> cancelTransaction(@PathVariable String id) {
-        try {
-            TransactionResponse response = cancelTransactionUseCase.execute(id);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        } catch (RuntimeException e) {
-            if (e.getMessage().contains("not found")) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        TransactionResponse response = cancelTransactionUseCase.execute(id);
+        return ResponseEntity.ok(response);
     }
 }

@@ -75,19 +75,14 @@ public class ControllerUtils {
     }
 
     /**
-     * Executes a service operation and handles exceptions appropriately
+     * Executes a service operation and returns the result
+     * Exceptions are handled by GlobalExceptionHandler
      * @param serviceCall the service method to execute
      * @param <T> the response type
-     * @return ResponseEntity with appropriate status codes
+     * @return ResponseEntity with the result
      */
     public static <T> ResponseEntity<T> executeServiceCall(Supplier<T> serviceCall) {
-        try {
-            T result = serviceCall.get();
-            return ResponseEntity.ok(result);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        T result = serviceCall.get();
+        return ResponseEntity.ok(result);
     }
 }

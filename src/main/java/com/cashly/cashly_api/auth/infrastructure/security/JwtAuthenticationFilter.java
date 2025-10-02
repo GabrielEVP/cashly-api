@@ -43,23 +43,43 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String jwt = extractJwtFromRequest(request);
 
-            if (jwt != null && tokenService.validateToken(jwt)) {
-                UserId userId = tokenService.extractUserId(jwt);
-                User user = userRepository.findById(userId).orElse(null);
+            if (jwt != null) {
+                logger.info("JWT token found for request: " + request.getRequestURI());
 
-                if (user != null && user.canAuthenticate()) {
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        user.getId().getValue().toString(),
-                        null,
-                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
-                    );
+                if (tokenService.validateToken(jwt)) {
+                    logger.info("JWT token is valid");
+                    UserId userId = tokenService.extractUserId(jwt);
+                    logger.info("Extracted userId: " + userId);
 
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    User user = userRepository.findById(userId).orElse(null);
+
+                    if (user != null) {
+                        logger.info("User found: " + user.getEmail().getValue());
+
+                        if (user.canAuthenticate()) {
+                            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                                user.getId().getValue().toString(),
+                                null,
+                                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                            );
+
+                            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                            SecurityContextHolder.getContext().setAuthentication(authentication);
+                            logger.info("Authentication set successfully for user: " + user.getEmail().getValue());
+                        } else {
+                            logger.error("User cannot authenticate (inactive or deleted): " + user.getEmail().getValue());
+                        }
+                    } else {
+                        logger.error("User not found in database for userId: " + userId);
+                    }
+                } else {
+                    logger.error("JWT token validation failed");
                 }
+            } else {
+                logger.info("No JWT token in request: " + request.getRequestURI());
             }
         } catch (Exception e) {
-            logger.error("Cannot set user authentication", e);
+            logger.error("Cannot set user authentication: " + e.getMessage(), e);
         }
 
         filterChain.doFilter(request, response);

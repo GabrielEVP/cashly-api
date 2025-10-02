@@ -34,71 +34,32 @@ public class ExpenseController {
 
     @PostMapping
     public ResponseEntity<ExpenseResponse> createExpense(@RequestBody CreateExpenseRequest request) {
-        try {
-            ExpenseResponse response = createExpenseUseCase.execute(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        ExpenseResponse response = createExpenseUseCase.execute(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ExpenseResponse> updateExpense(@PathVariable String id, 
+    public ResponseEntity<ExpenseResponse> updateExpense(@PathVariable String id,
                                                         @RequestBody UpdateExpenseRequest request) {
-        try {
-            ExpenseResponse response = updateExpenseUseCase.execute(id, request);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (RuntimeException e) {
-            if (e.getMessage().contains("not found")) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        ExpenseResponse response = updateExpenseUseCase.execute(id, request);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteExpense(@PathVariable String id) {
-        try {
-            deleteExpenseUseCase.execute(id);
-            return ResponseEntity.noContent().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (RuntimeException e) {
-            if (e.getMessage().contains("not found")) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        deleteExpenseUseCase.execute(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ExpenseResponse> getExpenseById(@PathVariable String id) {
-        try {
-            ExpenseResponse response = getExpenseByIdUseCase.execute(id);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (RuntimeException e) {
-            if (e.getMessage().contains("not found")) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        ExpenseResponse response = getExpenseByIdUseCase.execute(id);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping
     public ResponseEntity<List<ExpenseResponse>> getExpensesByUser(@RequestParam String userId) {
-        try {
-            List<ExpenseResponse> responses = getExpensesByUserUseCase.execute(userId);
-            return ResponseEntity.ok(responses);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        List<ExpenseResponse> responses = getExpensesByUserUseCase.execute(userId);
+        return ResponseEntity.ok(responses);
     }
 }

@@ -1,23 +1,26 @@
 package com.cashly.cashly_api.auth.infrastructure.security;
 
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
+import java.util.UUID;
+
+import javax.crypto.SecretKey;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
 import com.cashly.cashly_api.auth.application.ports.TokenService;
 import com.cashly.cashly_api.auth.domain.entities.RefreshToken;
 import com.cashly.cashly_api.auth.domain.entities.User;
 import com.cashly.cashly_api.auth.domain.valueobjects.Email;
 import com.cashly.cashly_api.auth.domain.valueobjects.RefreshTokenId;
 import com.cashly.cashly_api.auth.domain.valueobjects.UserId;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
-import java.util.UUID;
 
 @Service
 public class JwtTokenService implements TokenService {
@@ -85,7 +88,7 @@ public class JwtTokenService implements TokenService {
                 .build()
                 .parseSignedClaims(token);
             return true;
-        } catch (Exception e) {
+        } catch (io.jsonwebtoken.security.SecurityException | io.jsonwebtoken.MalformedJwtException | io.jsonwebtoken.ExpiredJwtException | IllegalArgumentException e) {
             return false;
         }
     }

@@ -34,71 +34,32 @@ public class IncomeController {
 
     @PostMapping
     public ResponseEntity<IncomeResponse> createIncome(@RequestBody CreateIncomeRequest request) {
-        try {
-            IncomeResponse response = createIncomeUseCase.execute(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        IncomeResponse response = createIncomeUseCase.execute(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<IncomeResponse> updateIncome(@PathVariable String id, 
+    public ResponseEntity<IncomeResponse> updateIncome(@PathVariable String id,
                                                       @RequestBody UpdateIncomeRequest request) {
-        try {
-            IncomeResponse response = updateIncomeUseCase.execute(id, request);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (RuntimeException e) {
-            if (e.getMessage().contains("not found")) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        IncomeResponse response = updateIncomeUseCase.execute(id, request);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteIncome(@PathVariable String id) {
-        try {
-            deleteIncomeUseCase.execute(id);
-            return ResponseEntity.noContent().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (RuntimeException e) {
-            if (e.getMessage().contains("not found")) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        deleteIncomeUseCase.execute(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<IncomeResponse> getIncomeById(@PathVariable String id) {
-        try {
-            IncomeResponse response = getIncomeByIdUseCase.execute(id);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (RuntimeException e) {
-            if (e.getMessage().contains("not found")) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        IncomeResponse response = getIncomeByIdUseCase.execute(id);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping
     public ResponseEntity<List<IncomeResponse>> getIncomesByUser(@RequestParam String userId) {
-        try {
-            List<IncomeResponse> responses = getIncomesByUserUseCase.execute(userId);
-            return ResponseEntity.ok(responses);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        List<IncomeResponse> responses = getIncomesByUserUseCase.execute(userId);
+        return ResponseEntity.ok(responses);
     }
 }
