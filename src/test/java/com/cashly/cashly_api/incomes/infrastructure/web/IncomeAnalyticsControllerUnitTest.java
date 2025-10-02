@@ -96,35 +96,33 @@ class IncomeAnalyticsControllerUnitTest {
     }
 
     @Test
-    void should_ReturnBadRequest_When_GrowthAnalysisServiceThrowsIllegalArgumentException() {
+    void should_ThrowIllegalArgumentException_When_GrowthAnalysisServiceThrowsIllegalArgumentException() {
         // Arrange
         String userId = "user123";
         String monthParam = "2024-03";
-        
+
         when(incomeService.analyzeIncomeGrowth(userId, YearMonth.parse(monthParam)))
             .thenThrow(new IllegalArgumentException("Invalid input"));
 
-        // Act
-        ResponseEntity<IncomeGrowthAnalysis> result = controller.getIncomeGrowthAnalysis(userId, monthParam);
-
-        // Assert
-        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () ->
+            controller.getIncomeGrowthAnalysis(userId, monthParam)
+        );
     }
 
     @Test
-    void should_ReturnInternalServerError_When_GrowthAnalysisServiceThrowsException() {
+    void should_ThrowException_When_GrowthAnalysisServiceThrowsException() {
         // Arrange
         String userId = "user123";
         String monthParam = "2024-03";
-        
+
         when(incomeService.analyzeIncomeGrowth(userId, YearMonth.parse(monthParam)))
             .thenThrow(new RuntimeException("Database error"));
 
-        // Act
-        ResponseEntity<IncomeGrowthAnalysis> result = controller.getIncomeGrowthAnalysis(userId, monthParam);
-
-        // Assert
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, result.getStatusCode());
+        // Act & Assert
+        assertThrows(RuntimeException.class, () ->
+            controller.getIncomeGrowthAnalysis(userId, monthParam)
+        );
     }
 
     @Test
@@ -212,36 +210,34 @@ class IncomeAnalyticsControllerUnitTest {
     }
 
     @Test
-    void should_ReturnBadRequest_When_MonthlyAverageServiceThrowsIllegalArgumentException() {
+    void should_ThrowIllegalArgumentException_When_MonthlyAverageServiceThrowsIllegalArgumentException() {
         // Arrange
         String userId = "user123";
         String monthsParam = "6";
         String referenceDateParam = "2024-03-31";
-        
+
         when(incomeService.calculateMonthlyAverageIncome(userId, 6, LocalDate.parse(referenceDateParam)))
             .thenThrow(new IllegalArgumentException("Invalid input"));
 
-        // Act
-        ResponseEntity<Amount> result = controller.getMonthlyAverage(userId, monthsParam, referenceDateParam);
-
-        // Assert
-        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () ->
+            controller.getMonthlyAverage(userId, monthsParam, referenceDateParam)
+        );
     }
 
     @Test
-    void should_ReturnInternalServerError_When_MonthlyAverageServiceThrowsException() {
+    void should_ThrowException_When_MonthlyAverageServiceThrowsException() {
         // Arrange
         String userId = "user123";
         String monthsParam = "6";
         String referenceDateParam = "2024-03-31";
-        
+
         when(incomeService.calculateMonthlyAverageIncome(userId, 6, LocalDate.parse(referenceDateParam)))
             .thenThrow(new RuntimeException("Database error"));
 
-        // Act
-        ResponseEntity<Amount> result = controller.getMonthlyAverage(userId, monthsParam, referenceDateParam);
-
-        // Assert
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, result.getStatusCode());
+        // Act & Assert
+        assertThrows(RuntimeException.class, () ->
+            controller.getMonthlyAverage(userId, monthsParam, referenceDateParam)
+        );
     }
 }

@@ -1,12 +1,17 @@
 package com.cashly.cashly_api.auth.infrastructure.web;
 
-import com.cashly.cashly_api.shared.exceptions.*;
-import org.junit.jupiter.api.BeforeEach;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,11 +19,11 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
+import com.cashly.cashly_api.shared.exceptions.DuplicateEmailException;
+import com.cashly.cashly_api.shared.exceptions.InvalidCredentialsException;
+import com.cashly.cashly_api.shared.exceptions.InvalidTokenException;
+import com.cashly.cashly_api.shared.exceptions.TokenExpiredException;
+import com.cashly.cashly_api.shared.exceptions.UserNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AuthExceptionHandler Unit Tests")

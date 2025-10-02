@@ -80,19 +80,18 @@ class ExpenseAnalyticsControllerUnitTest {
     }
 
     @Test
-    void should_ReturnInternalServerError_When_SpendingTrendServiceThrowsException() {
+    void should_ThrowException_When_SpendingTrendServiceThrowsException() {
         // Arrange
         String userId = "user123";
         String monthParam = "2024-03";
-        
+
         when(expenseService.analyzeSpendingTrend(userId, YearMonth.parse(monthParam)))
             .thenThrow(new RuntimeException("Database error"));
 
-        // Act
-        ResponseEntity<SpendingAnalysis> result = controller.getSpendingTrend(userId, monthParam);
-
-        // Assert
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, result.getStatusCode());
+        // Act & Assert
+        assertThrows(RuntimeException.class, () ->
+            controller.getSpendingTrend(userId, monthParam)
+        );
     }
 
     @Test
