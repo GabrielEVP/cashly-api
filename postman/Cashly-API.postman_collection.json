@@ -296,7 +296,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"userId\": \"{{userId}}\",\n    \"name\": \"Cuenta Principal\",\n    \"type\": \"CHECKING\",\n    \"currency\": \"USD\",\n    \"initialBalance\": 1000.00,\n    \"description\": \"Mi cuenta principal\"\n}"
+							"raw": "{\n    \"userId\": \"{{userId}}\",\n    \"name\": \"Cuenta Principal\",\n    \"type\": \"CHECKING\",\n    \"currency\": \"USD\",\n    \"balance\": 1000.00\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/accounts",
@@ -482,7 +482,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"userId\": \"{{userId}}\",\n    \"accountId\": \"{{accountId}}\",\n    \"type\": \"DEPOSIT\",\n    \"amount\": 500.00,\n    \"description\": \"Depósito inicial\",\n    \"category\": \"INCOME\",\n    \"date\": \"2025-10-02T10:00:00Z\"\n}"
+							"raw": "{\n    \"userId\": \"{{userId}}\",\n    \"type\": \"DEPOSIT\",\n    \"amount\": 500.00,\n    \"currency\": \"USD\",\n    \"description\": \"Depósito inicial\",\n    \"transactionDate\": \"2025-10-02\",\n    \"destinationAccountId\": \"{{accountId}}\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/transactions",
@@ -646,7 +646,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"userId\": \"{{userId}}\",\n    \"accountId\": \"{{accountId}}\",\n    \"amount\": 150.00,\n    \"category\": \"FOOD\",\n    \"description\": \"Compras del supermercado\",\n    \"date\": \"2025-10-02T10:00:00Z\",\n    \"isRecurring\": false\n}"
+							"raw": "{\n    \"userId\": \"{{userId}}\",\n    \"amount\": 150.00,\n    \"category\": \"FOOD_DINING\",\n    \"description\": \"Compras del supermercado\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/expenses",
@@ -713,7 +713,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"amount\": 175.00,\n    \"category\": \"FOOD\",\n    \"description\": \"Compras del supermercado - actualizado\"\n}"
+							"raw": "{\n    \"amount\": 175.00,\n    \"category\": \"FOOD_DINING\",\n    \"description\": \"Compras del supermercado - actualizado\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/expenses/{{expenseId}}",
@@ -918,7 +918,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"userId\": \"{{userId}}\",\n    \"accountId\": \"{{accountId}}\",\n    \"amount\": 3000.00,\n    \"source\": \"SALARY\",\n    \"description\": \"Salario mensual\",\n    \"date\": \"2025-10-01T00:00:00Z\",\n    \"isRecurring\": true\n}"
+							"raw": "{\n    \"userId\": \"{{userId}}\",\n    \"amount\": 3000.00,\n    \"category\": \"SALARY\",\n    \"description\": \"Salario mensual\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/incomes",
@@ -985,7 +985,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"amount\": 3200.00,\n    \"source\": \"SALARY\",\n    \"description\": \"Salario mensual con aumento\"\n}"
+							"raw": "{\n    \"amount\": 3200.00,\n    \"category\": \"SALARY\",\n    \"description\": \"Salario mensual con aumento\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/incomes/{{incomeId}}",
