@@ -1,11 +1,24 @@
 package com.cashly.cashly_api.auth.infrastructure.web;
 
-import com.cashly.cashly_api.auth.application.dto.*;
-import com.cashly.cashly_api.auth.application.usecases.*;
-import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.cashly.cashly_api.auth.application.dto.AuthenticationResponse;
+import com.cashly.cashly_api.auth.application.dto.LoginRequest;
+import com.cashly.cashly_api.auth.application.dto.LogoutRequest;
+import com.cashly.cashly_api.auth.application.dto.RefreshTokenRequest;
+import com.cashly.cashly_api.auth.application.dto.RegisterUserRequest;
+import com.cashly.cashly_api.auth.application.dto.UserResponse;
+import com.cashly.cashly_api.auth.application.usecases.LoginUserUseCase;
+import com.cashly.cashly_api.auth.application.usecases.LogoutUserUseCase;
+import com.cashly.cashly_api.auth.application.usecases.RefreshTokenUseCase;
+import com.cashly.cashly_api.auth.application.usecases.RegisterUserUseCase;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/auth")

@@ -297,6 +297,35 @@ Our testing approach follows the **Testing Pyramid** and **TDD** principles:
 
 ## 📊 API Documentation
 
+### Quick Testing with Postman
+
+📦 **Importa la colección completa de Postman:**
+
+1. **Archivos disponibles:**
+   - `Cashly-API.postman_collection.json` - Colección con todos los endpoints
+   - `Cashly-Local.postman_environment.json` - Variables de entorno
+   - `POSTMAN.md` - Guía de instalación y uso
+   - `POSTMAN-GUIDE.md` - Ejemplos y flujos de prueba completos
+
+2. **Características:**
+   - ✅ Todos los endpoints documentados
+   - ✅ Autenticación automática con Bearer Token
+   - ✅ Variables auto-guardadas (userId, accountId, tokens, etc.)
+   - ✅ Ejemplos de requests y responses
+   - ✅ Scripts de prueba automatizados
+
+3. **Inicio rápido:**
+   ```bash
+   # Importar en Postman
+   # File > Import > Seleccionar los archivos .json
+   
+   # O usar desde línea de comandos
+   npm install -g newman
+   newman run Cashly-API.postman_collection.json -e Cashly-Local.postman_environment.json
+   ```
+
+Ver [POSTMAN.md](POSTMAN.md) para instrucciones detalladas.
+
 ### Health Check
 ```http
 GET /actuator/health
@@ -304,27 +333,61 @@ GET /actuator/health
 
 ### Authentication Endpoints
 ```http
-POST /api/v1/auth/login
-POST /api/v1/auth/register
-POST /api/v1/auth/refresh
-DELETE /api/v1/auth/logout
+POST /api/auth/login
+POST /api/auth/register
+POST /api/auth/refresh
+POST /api/auth/logout
 ```
 
 ### Account Management
 ```http
-GET    /api/v1/accounts
-POST   /api/v1/accounts
-GET    /api/v1/accounts/{id}
-PUT    /api/v1/accounts/{id}
-DELETE /api/v1/accounts/{id}
+GET    /api/accounts
+POST   /api/accounts
+GET    /api/accounts/{id}
+PUT    /api/accounts/{id}
+PATCH  /api/accounts/{id}/deactivate
+DELETE /api/accounts/{id}
 ```
 
 ### Transaction Management
 ```http
-GET    /api/v1/transactions
-POST   /api/v1/transactions
-GET    /api/v1/transactions/{id}
-GET    /api/v1/accounts/{accountId}/transactions
+GET    /api/transactions
+POST   /api/transactions
+GET    /api/transactions/{id}
+GET    /api/transactions/account/{accountId}
+PUT    /api/transactions/{id}
+POST   /api/transactions/{id}/cancel
+```
+
+### Expense Management
+```http
+GET    /api/expenses
+POST   /api/expenses
+GET    /api/expenses/{id}
+PUT    /api/expenses/{id}
+DELETE /api/expenses/{id}
+```
+
+### Expense Analytics
+```http
+GET /api/expenses/analytics/spending-trend
+GET /api/expenses/analytics/budget-utilization
+GET /api/expenses/analytics/category-analysis
+GET /api/expenses/analytics/monthly-average
+```
+
+### Income Management
+```http
+GET    /api/incomes
+POST   /api/incomes
+GET    /api/incomes/{id}
+PUT    /api/incomes/{id}
+DELETE /api/incomes/{id}
+```
+
+### Income Analytics
+```http
+GET /api/incomes/analytics/growth-analysis
 ```
 
 ### OpenAPI Documentation
