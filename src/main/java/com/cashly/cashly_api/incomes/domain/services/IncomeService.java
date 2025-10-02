@@ -1,13 +1,12 @@
 package com.cashly.cashly_api.incomes.domain.services;
 
-import com.cashly.cashly_api.incomes.application.ports.IncomeRepository;
-import com.cashly.cashly_api.incomes.domain.valueobjects.Amount;
-import com.cashly.cashly_api.incomes.domain.valueobjects.Category;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
+
+import com.cashly.cashly_api.incomes.application.ports.IncomeRepository;
+import com.cashly.cashly_api.incomes.domain.valueobjects.Amount;
 
 public class IncomeService {
 
